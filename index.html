@@ -3,179 +3,163 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>한국어 단어 테스트 - 韓国語単語テスト</title>
+<title>한국어 단어 테스트</title>
 <style>
 :root{
-  --bg:#0f1115; --panel:#1a1d24; --panel2:#22262f; --line:#2c313b;
-  --text:#f5f6fa; --mute:#8a93a6; --orange:#ff9600; --orange-d:#cc7700;
-  --green:#58cc02; --green-d:#46a302; --red:#ff4b4b; --blue:#1cb0f6;
-  --purple:#a560e8; --gold:#ffc800;
+  --bg:#000; --panel:#16181c; --panel2:#1f2125; --gray:#26282d; --gray-h:#33363c;
+  --line:#2a2d33; --text:#f2f3f5; --mute:#8b909a; --faint:#5c616b;
+  --red:#ff3b3b; --blue:#2f8bff; --green:#4cd964; --gold:#ffc83c;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;padding:0;background:var(--bg);color:var(--text);
+html,body{margin:0;padding:0;height:100%;background:var(--bg);color:var(--text);
   font-family:"Hiragino Kaku Gothic ProN","Yu Gothic UI","Meiryo","Noto Sans CJK JP","Noto Sans KR",system-ui,sans-serif;
-  overflow-x:hidden;-webkit-font-smoothing:antialiased}
-body{min-height:100vh;display:flex;justify-content:center;
-  background:radial-gradient(1200px 800px at 50% -10%,#1c2030 0%,#0f1115 60%)}
-.app{width:100%;max-width:520px;min-height:100vh;display:flex;flex-direction:column;position:relative;padding:0 0 40px}
+  -webkit-font-smoothing:antialiased;overscroll-behavior:none}
+body{display:flex;justify-content:center}
+.app{width:100%;max-width:520px;min-height:100dvh;display:flex;flex-direction:column;position:relative;background:var(--bg)}
 
-/* ===== top bar ===== */
-.topbar{position:sticky;top:0;z-index:50;background:rgba(15,17,21,.95);backdrop-filter:blur(8px);
-  border-bottom:1px solid var(--line);padding:12px 16px;display:flex;align-items:center;gap:12px}
-.brand{font-weight:900;font-size:17px;letter-spacing:.5px;
-  background:linear-gradient(135deg,var(--orange),var(--gold));-webkit-background-clip:text;background-clip:text;color:transparent}
-.qcount{margin-left:auto;font-weight:800;font-size:14px;color:var(--mute)}
-
-/* ===== timer ===== */
-.timerwrap{padding:10px 16px 0}
-.timerbar{height:14px;border-radius:8px;background:var(--panel2);overflow:hidden;border:1px solid var(--line)}
-.timerfill{height:100%;width:100%;background:linear-gradient(90deg,var(--green),var(--green-d));transition:width .1s linear}
-.timerfill.warn{background:linear-gradient(90deg,var(--orange),var(--orange-d))}
-.timerfill.danger{background:linear-gradient(90deg,var(--red),#c83232)}
-.timertext{margin-top:6px;font-size:13px;font-weight:800;color:var(--mute);text-align:right}
+button{font-family:inherit}
+.hidden{display:none!important}
 
 /* ===== screens ===== */
-.screen{flex:1;padding:18px 16px;display:none;flex-direction:column}
+.screen{flex:1;display:none;flex-direction:column;min-height:0}
 .screen.on{display:flex}
 
-h1.title{font-size:24px;font-weight:900;margin:8px 0 4px}
-.lead{color:var(--mute);font-size:14px;line-height:1.7;margin:0 0 18px}
+/* ===== top bar (quiz) ===== */
+.qbar{display:flex;align-items:center;justify-content:space-between;padding:14px 18px 0;font-size:13px;color:var(--mute);font-weight:700}
+.qbar .prog{letter-spacing:.5px}
+.qbar .time{color:var(--mute);font-variant-numeric:tabular-nums}
+.tbar{height:3px;margin:8px 18px 0;background:var(--gray);border-radius:3px;overflow:hidden}
+.tfill{height:100%;width:100%;background:var(--faint);transition:width .1s linear}
+.tfill.warn{background:var(--mute)}
 
-.card{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:18px;margin-bottom:14px}
-.qtype{display:inline-block;font-size:12px;font-weight:900;letter-spacing:.5px;padding:5px 12px;border-radius:20px;margin-bottom:14px}
-.qtype.jk{background:rgba(28,176,246,.15);color:var(--blue)}
-.qtype.kj{background:rgba(165,96,232,.15);color:var(--purple)}
-.qtype.w{background:rgba(255,150,0,.15);color:var(--orange)}
-.qprompt{font-size:15px;color:var(--mute);line-height:1.7}
-.qword{font-size:30px;font-weight:900;margin:6px 0 2px;word-break:break-all}
-.qword.ko{letter-spacing:.5px}
+/* ===== question ===== */
+.qstage{flex:1;display:flex;flex-direction:column;min-height:0}
+.qmain{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:8vh 20px 0;text-align:center}
+.qword{font-size:clamp(34px,9vw,46px);font-weight:800;line-height:1.25;word-break:break-all}
+.qbottom{padding:0 18px calc(18px + env(safe-area-inset-bottom))}
 
 /* choices */
-.choices{display:flex;flex-direction:column;gap:12px;margin-top:6px}
-.choice{background:var(--panel);border:2px solid var(--line);border-radius:14px;padding:16px 18px;
-  font-size:19px;font-weight:800;text-align:left;cursor:pointer;transition:transform .1s,border-color .1s,background .1s;
-  display:flex;align-items:center;gap:12px;color:var(--text)}
-.choice:active{transform:scale(.98)}
-.choice:hover{border-color:var(--mute)}
-.choice .mark{width:24px;height:24px;border-radius:50%;border:2px solid var(--mute);flex:0 0 auto}
-.choice.correct{border-color:var(--green);background:rgba(88,204,2,.12)}
-.choice.wrong{border-color:var(--red);background:rgba(255,75,75,.12)}
-.choice[disabled]{cursor:default;opacity:.85}
+.choices{display:flex;flex-direction:column;gap:12px;margin-bottom:14px}
+.choice{background:var(--gray);border:none;border-radius:14px;padding:18px;font-size:19px;font-weight:700;color:var(--text);
+  text-align:center;cursor:pointer;transition:background .12s,transform .08s;min-height:60px}
+.choice:active{transform:scale(.98);background:var(--gray-h)}
 
-/* writing input */
-.winput{width:100%;font-size:24px;font-weight:800;text-align:center;padding:16px;border-radius:14px;
-  background:var(--panel2);border:2px solid var(--line);color:var(--text);margin:4px 0 14px}
-.winput:focus{outline:none;border-color:var(--orange)}
+/* unknown btn */
+.unknown{display:block;margin:0 auto;background:#0c0d0f;border:1px solid var(--line);color:var(--faint);
+  font-size:13px;font-weight:600;padding:9px 22px;border-radius:20px;cursor:pointer}
+.unknown:active{background:#141518}
 
-/* buttons */
-.btn{display:block;width:100%;border:none;border-radius:16px;padding:16px;font-size:17px;font-weight:900;cursor:pointer;
-  letter-spacing:.5px;transition:transform .1s,filter .1s;margin-top:auto}
-.btn:active{transform:translateY(2px)}
-.btn[disabled]{opacity:.4;cursor:not-allowed}
-.btn.primary{background:var(--green);color:#08230a;box-shadow:0 5px 0 var(--green-d)}
-.btn.orange{background:var(--orange);color:#2a1700;box-shadow:0 5px 0 var(--orange-d)}
-.btn.ghost{background:var(--panel);color:var(--text);border:1px solid var(--line);box-shadow:none}
-.btn.sm{margin-top:10px;padding:13px;font-size:15px}
+/* ===== overlay symbol ===== */
+.overlay{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:300;pointer-events:auto}
+.ovsym{font-size:46vw;line-height:1;font-weight:300;opacity:.6}
+.ovsym.o{color:var(--red)}
+.ovsym.x{color:var(--blue);font-weight:200}
 
-/* feedback */
-.fb-banner{border-radius:18px;padding:20px;text-align:center;margin-bottom:16px}
-.fb-banner.ok{background:rgba(88,204,2,.13);border:1px solid var(--green)}
-.fb-banner.ng{background:rgba(255,75,75,.13);border:1px solid var(--red)}
-.fb-banner.to{background:rgba(255,200,0,.12);border:1px solid var(--gold)}
-.fb-title{font-size:26px;font-weight:900}
-.fb-banner.ok .fb-title{color:var(--green)}
-.fb-banner.ng .fb-title{color:var(--red)}
-.fb-banner.to .fb-title{color:var(--gold)}
-.fb-row{display:flex;justify-content:space-between;padding:10px 4px;border-bottom:1px solid var(--line);font-size:15px;gap:14px}
-.fb-row:last-child{border-bottom:none}
-.fb-row .k{color:var(--mute);flex:0 0 auto}
-.fb-row .v{font-weight:800;text-align:right}
-.fb-row .v.ko{font-size:20px}
-.note{margin-top:12px;background:rgba(255,150,0,.1);border:1px solid var(--orange-d);border-radius:12px;
-  padding:12px 14px;font-size:13px;line-height:1.6;color:#ffce8a}
-.note b{color:var(--orange)}
+/* ===== writing ===== */
+.winput{margin:0 18px;min-height:58px;background:var(--panel);border:1px solid var(--line);border-radius:12px;
+  display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:700;letter-spacing:1px;padding:10px}
+.wcaret{display:inline-block;width:2px;height:30px;background:var(--text);margin-left:2px;animation:blink 1s steps(1) infinite;vertical-align:middle}
+@keyframes blink{50%{opacity:0}}
+.kbd{margin-top:10px;padding:8px 6px calc(8px + env(safe-area-inset-bottom));background:var(--panel)}
+.krow{display:flex;gap:5px;justify-content:center;margin-bottom:6px}
+.key{flex:1;min-width:0;background:var(--gray);border:none;border-radius:8px;color:var(--text);font-size:18px;font-weight:600;
+  padding:13px 0;cursor:pointer;min-height:46px}
+.key:active{background:var(--gray-h)}
+.key.wide{flex:1.5}
+.key.fn{background:var(--panel2);color:var(--mute);font-size:13px;font-weight:700}
+.key.shifton{background:var(--text);color:#000}
+.krow.ctrl .key{font-size:13px;font-weight:700;padding:13px 0}
+.key.send{background:var(--green);color:#062a0f}
+.key.dontknow{background:#0c0d0f;border:1px solid var(--line);color:var(--faint)}
 
-/* result */
-.rank-hero{text-align:center;padding:14px 0 6px}
-.rank-letter{font-size:96px;font-weight:900;line-height:1;letter-spacing:2px}
-.rank-S{color:var(--gold);text-shadow:0 0 30px rgba(255,200,0,.6)}
-.rank-A{color:var(--green)}
-.rank-B{color:var(--blue)}
-.rank-C{color:var(--purple)}
-.rank-D{color:var(--mute)}
-.bigscore{font-size:34px;font-weight:900;margin-top:6px}
-.subscore{color:var(--mute);font-weight:800;margin-top:2px}
-.perfect{color:var(--gold);font-weight:900;letter-spacing:3px;margin-top:8px;font-size:18px}
-.specialmsg{margin-top:6px;color:var(--mute);font-size:14px}
-.divider{height:1px;background:var(--line);margin:16px 0}
-.stat-row{display:flex;justify-content:space-between;padding:8px 4px;font-size:15px}
-.stat-row .k{color:var(--mute)}
-.stat-row .v{font-weight:800}
+/* ===== home ===== */
+.home{padding:0 22px;flex:1;display:flex;flex-direction:column;justify-content:center;gap:14px}
+.home h1{font-size:30px;font-weight:800;margin:0;text-align:center}
+.home .sub{color:var(--mute);font-size:14px;text-align:center;line-height:1.7;margin:-4px 0 18px}
+.btn{display:block;width:100%;border:none;border-radius:14px;padding:17px;font-size:17px;font-weight:800;cursor:pointer;transition:transform .08s}
+.btn:active{transform:translateY(1px)}
+.btn.primary{background:var(--text);color:#000}
+.btn.ghost{background:var(--gray);color:var(--text)}
+.btn.line{background:transparent;border:1px solid var(--line);color:var(--mute)}
 
-/* table */
-.qtable{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:6px}
-.qtable th,.qtable td{padding:8px 5px;border-bottom:1px solid var(--line);text-align:center}
-.qtable th{color:var(--mute);font-size:11px;font-weight:800}
-.qtable td.w{font-weight:800;letter-spacing:.3px}
-.qtable .ok{color:var(--green)}
-.qtable .ng{color:var(--red)}
-.qtable .to{color:var(--gold)}
+/* ===== result (fixed, only list scrolls) ===== */
+.res{height:100dvh;display:flex;flex-direction:column;padding:18px 18px calc(14px + env(safe-area-inset-bottom))}
+.res-head{flex:0 0 auto;text-align:center}
+.res-label{color:var(--mute);font-size:12px;letter-spacing:3px;font-weight:800}
+.res-rank{font-size:74px;font-weight:900;line-height:1.05;margin:2px 0}
+.rank-S{color:var(--gold)}.rank-A{color:var(--green)}.rank-B{color:var(--blue)}.rank-C{color:var(--text)}.rank-D{color:var(--mute)}
+.res-score{font-size:24px;font-weight:800}
+.res-stats{display:flex;justify-content:center;gap:18px;margin-top:8px;color:var(--mute);font-size:13px;font-weight:700;flex-wrap:wrap}
+.res-stats b{color:var(--text);font-weight:800}
+.res-listwrap{flex:1 1 auto;min-height:0;overflow-y:auto;margin:14px 0;border:1px solid var(--line);border-radius:12px;-webkit-overflow-scrolling:touch}
+.rtab{width:100%;border-collapse:collapse;font-size:13px}
+.rtab th,.rtab td{padding:9px 8px;border-bottom:1px solid var(--line);text-align:left}
+.rtab th{position:sticky;top:0;background:var(--panel2);color:var(--mute);font-size:11px;font-weight:800;z-index:1}
+.rtab td.no{color:var(--mute);text-align:right;width:34px}
+.rtab td.ko{font-weight:700}
+.rtab .r-ok{color:var(--green)}.rtab .r-ng{color:var(--blue)}.rtab .r-un{color:var(--mute)}.rtab .r-to{color:var(--gold)}
+.res-btns{flex:0 0 auto;display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.res-btns .btn{padding:14px;font-size:14px}
+.res-btns .full{grid-column:1/3}
 
-/* review */
-.rv-item{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:12px}
-.rv-ko{font-size:24px;font-weight:900}
-.rv-ja{font-size:15px;color:var(--text);margin-top:2px}
-.rv-ans{font-size:13px;color:var(--red);margin-top:6px}
-.rv-cor{font-size:13px;color:var(--green);margin-top:2px}
-
-.section-title{font-size:13px;color:var(--mute);font-weight:900;text-transform:uppercase;letter-spacing:1.2px;margin:20px 4px 10px}
-
-/* confetti */
-.confetti{position:fixed;top:-10px;width:10px;height:14px;z-index:999;pointer-events:none;border-radius:2px}
-@keyframes fall{to{transform:translateY(105vh) rotate(720deg);opacity:.2}}
-@keyframes pop{0%{transform:scale(.6);opacity:0}60%{transform:scale(1.12)}100%{transform:scale(1);opacity:1}}
-.pop{animation:pop .5s ease both}
+/* ===== generic page (history / curve) ===== */
+.page{height:100dvh;display:flex;flex-direction:column;padding:16px 16px calc(12px + env(safe-area-inset-bottom))}
+.page-head{flex:0 0 auto;display:flex;align-items:center;gap:12px;margin-bottom:10px}
+.page-head h2{font-size:20px;font-weight:800;margin:0}
+.back{background:var(--gray);border:none;color:var(--text);width:38px;height:38px;border-radius:10px;font-size:18px;cursor:pointer;flex:0 0 auto}
+.page-body{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.htab{width:100%;border-collapse:collapse;font-size:13px}
+.htab th,.htab td{padding:10px 8px;border-bottom:1px solid var(--line);text-align:left}
+.htab th{position:sticky;top:0;background:var(--bg);color:var(--mute);font-size:11px;font-weight:800}
+.htab td.num{text-align:right;font-variant-numeric:tabular-nums}
+.htab tr.click{cursor:pointer}
+.htab tr.click:active{background:var(--panel)}
+.rate-bad{color:var(--blue)}.rate-mid{color:var(--gold)}.rate-good{color:var(--green)}
+.empty{color:var(--mute);text-align:center;padding:40px 20px;line-height:1.9;font-size:14px}
+.note{background:#1a1407;border:1px solid #3a2e0a;border-radius:10px;padding:11px 13px;font-size:12.5px;color:#e8c878;line-height:1.6;margin:10px 0}
+.curve-stats{display:flex;flex-wrap:wrap;gap:10px;margin:12px 0}
+.cstat{flex:1 1 44%;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px}
+.cstat .k{color:var(--mute);font-size:11px;font-weight:700}
+.cstat .v{font-size:17px;font-weight:800;margin-top:3px}
+.chartbox{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 10px 8px}
+.wdetail-head{margin-bottom:6px}
+.wdetail-head .ko{font-size:26px;font-weight:800}
+.wdetail-head .ja{color:var(--mute);font-size:14px;margin-top:2px}
 </style>
 </head>
 <body>
-<div class="app">
-  <div class="topbar">
-    <div class="brand">한국어 단어 테스트</div>
-    <div class="qcount" id="qcount"></div>
-  </div>
+<div class="app" id="app">
 
-  <div class="timerwrap" id="timerwrap" style="display:none">
-    <div class="timerbar"><div class="timerfill" id="timerfill"></div></div>
-    <div class="timertext" id="timertext">残り時間：10.0秒</div>
-  </div>
-
-  <!-- T-01 start -->
-  <div class="screen on" id="s-start">
-    <h1 class="title">韓国語単語テスト</h1>
-    <p class="lead">
-      登録された韓国語<b>100語</b>から<b>12問</b>を出題します。<br>
-      Q1〜5：日→韓 四択 ／ Q6〜10：韓→日 四択 ／ Q11〜12：日→韓 書き取り<br>
-      各問の制限時間は<b>10秒</b>。早く正解するほど高得点。満点100点です。
-    </p>
-    <div class="card">
-      <div class="stat-row"><span class="k">配点 四択</span><span class="v">最大8点 ×10問</span></div>
-      <div class="stat-row"><span class="k">配点 書き取り</span><span class="v">最大10点 ×2問</span></div>
-      <div class="stat-row"><span class="k">ランク</span><span class="v">S / A / B / C / D</span></div>
+  <!-- HOME -->
+  <div class="screen on" id="s-home">
+    <div class="home">
+      <h1>한국어 단어 테스트</h1>
+      <div class="sub">100語からランダム12問<br>四択10秒 / 書き取り20秒・満点100点</div>
+      <button class="btn primary" onclick="startTest()">テストを始める</button>
+      <button class="btn ghost" onclick="renderHistory()">学習履歴を見る</button>
+      <button class="btn ghost" onclick="renderCurve()">忘却曲線を見る</button>
     </div>
-    <button class="btn primary" onclick="startTest()">テストを始める</button>
   </div>
 
-  <div class="screen" id="s-quiz"></div>
-  <div class="screen" id="s-fb"></div>
+  <!-- QUIZ -->
+  <div class="screen" id="s-quiz">
+    <div class="qbar"><span class="prog" id="prog">1 / 12</span><span class="time" id="time">10.0</span></div>
+    <div class="tbar"><div class="tfill" id="tfill"></div></div>
+    <div class="qstage" id="qstage"></div>
+  </div>
+
+  <!-- RESULT -->
   <div class="screen" id="s-result"></div>
-  <div class="screen" id="s-review"></div>
+  <!-- HISTORY -->
+  <div class="screen" id="s-history"></div>
+  <!-- WORD DETAIL -->
+  <div class="screen" id="s-wdetail"></div>
+  <!-- CURVE -->
+  <div class="screen" id="s-curve"></div>
 </div>
 
 <script>
-/* ============================================================
-   単語データ 100語
-   id, ko(韓), ja(正しい意味), d(韓→日 ダミー選択肢3つ), n(注意事項/任意)
-   ============================================================ */
+/* ============================================================ 単語データ 100語 ============================================================ */
 const WORDS=[
  {id:1,ko:"가루비누",ja:"粉石鹸",d:["洗濯物","洗剤の泡","柔軟剤"]},
  {id:2,ko:"강우량",ja:"降雨量",d:["降水確率","河川の水位","湿度"]},
@@ -278,322 +262,393 @@ const WORDS=[
  {id:99,ko:"전산실",ja:"電算室、情報処理室",d:["放送室","実験室","資料室"]},
  {id:100,ko:"현모양처",ja:"良妻賢母",d:["専業主婦","働く母親","厳格な母親"],n:"歴史的・伝統的な価値観を説明する場面で使われやすい"},
 ];
+const WORD_BY_ID={};WORDS.forEach(w=>WORD_BY_ID[w.id]=w);
 
-/* ============================================================ */
-const TIME_LIMIT=10;
-const PLAN=[
-  ...Array(5).fill("jk"),     // Q1-5  日→韓 四択
-  ...Array(5).fill("kj"),     // Q6-10 韓→日 四択
-  ...Array(2).fill("w"),      // Q11-12 日→韓 書き取り
-];
-const TYPE_LABEL={jk:"日→韓 四択",kj:"韓→日 四択",w:"日→韓 書き取り"};
+/* ============================================================ ハングルIME（2ボル式 文字合成） ============================================================ */
+const CHO=["ㄱ","ㄲ","ㄴ","ㄷ","ㄸ","ㄹ","ㅁ","ㅂ","ㅃ","ㅅ","ㅆ","ㅇ","ㅈ","ㅉ","ㅊ","ㅋ","ㅌ","ㅍ","ㅎ"];
+const JUNG=["ㅏ","ㅐ","ㅑ","ㅒ","ㅓ","ㅔ","ㅕ","ㅖ","ㅗ","ㅘ","ㅙ","ㅚ","ㅛ","ㅜ","ㅝ","ㅞ","ㅟ","ㅠ","ㅡ","ㅢ","ㅣ"];
+const JONG=["","ㄱ","ㄲ","ㄳ","ㄴ","ㄵ","ㄶ","ㄷ","ㄹ","ㄺ","ㄻ","ㄼ","ㄽ","ㄾ","ㄿ","ㅀ","ㅁ","ㅂ","ㅄ","ㅅ","ㅆ","ㅇ","ㅈ","ㅊ","ㅋ","ㅌ","ㅍ","ㅎ"];
+const CHO_I={},JUNG_I={},JONG_I={};
+CHO.forEach((c,i)=>CHO_I[c]=i);JUNG.forEach((c,i)=>JUNG_I[c]=i);JONG.forEach((c,i)=>{if(c)JONG_I[c]=i});
+const COMB_JUNG={"ㅗㅏ":"ㅘ","ㅗㅐ":"ㅙ","ㅗㅣ":"ㅚ","ㅜㅓ":"ㅝ","ㅜㅔ":"ㅞ","ㅜㅣ":"ㅟ","ㅡㅣ":"ㅢ"};
+const DEC_JUNG={"ㅘ":["ㅗ","ㅏ"],"ㅙ":["ㅗ","ㅐ"],"ㅚ":["ㅗ","ㅣ"],"ㅝ":["ㅜ","ㅓ"],"ㅞ":["ㅜ","ㅔ"],"ㅟ":["ㅜ","ㅣ"],"ㅢ":["ㅡ","ㅣ"]};
+const COMB_JONG={"ㄱㅅ":"ㄳ","ㄴㅈ":"ㄵ","ㄴㅎ":"ㄶ","ㄹㄱ":"ㄺ","ㄹㅁ":"ㄻ","ㄹㅂ":"ㄼ","ㄹㅅ":"ㄽ","ㄹㅌ":"ㄾ","ㄹㅍ":"ㄿ","ㄹㅎ":"ㅀ","ㅂㅅ":"ㅄ"};
+const DEC_JONG={"ㄳ":["ㄱ","ㅅ"],"ㄵ":["ㄴ","ㅈ"],"ㄶ":["ㄴ","ㅎ"],"ㄺ":["ㄹ","ㄱ"],"ㄻ":["ㄹ","ㅁ"],"ㄼ":["ㄹ","ㅂ"],"ㄽ":["ㄹ","ㅅ"],"ㄾ":["ㄹ","ㅌ"],"ㄿ":["ㄹ","ㅍ"],"ㅀ":["ㄹ","ㅎ"],"ㅄ":["ㅂ","ㅅ"]};
+const isVowel=j=>JUNG_I[j]!==undefined;
+const isValidJong=j=>JONG_I[j]!==undefined;
 
-let state=null;
+const IME={
+  cho:null,jung:null,jong:null,committed:"",
+  reset(){this.cho=this.jung=this.jong=null;this.committed="";},
+  _renderBlock(cho,jung,jong){
+    if(cho===null&&jung===null)return"";
+    if(cho!==null&&jung===null)return cho;
+    if(cho===null&&jung!==null)return jung;
+    const ti=jong?JONG_I[jong]:0;
+    return String.fromCharCode(0xAC00+(CHO_I[cho]*21+JUNG_I[jung])*28+ti);
+  },
+  _render(){return this._renderBlock(this.cho,this.jung,this.jong);},
+  text(){return this.committed+this._render();},
+  commit(){this.committed+=this._render();this.cho=this.jung=this.jong=null;},
+  input(j){ isVowel(j)?this._vowel(j):this._cons(j); },
+  _cons(j){
+    if(this.cho===null&&this.jung===null&&this.jong===null){this.cho=j;return;}
+    if(this.cho!==null&&this.jung===null){this.commit();this.cho=j;return;}
+    if(this.cho===null&&this.jung!==null){this.commit();this.cho=j;return;}
+    if(this.jong===null){
+      if(isValidJong(j))this.jong=j; else{this.commit();this.cho=j;}
+      return;
+    }
+    const c=COMB_JONG[this.jong+j];
+    if(c)this.jong=c; else{this.commit();this.cho=j;}
+  },
+  _vowel(j){
+    if(this.cho===null&&this.jung===null){this.jung=j;return;}
+    if(this.cho!==null&&this.jung===null){this.jung=j;return;}
+    if(this.jong===null){
+      const c=COMB_JUNG[this.jung+j];
+      if(c)this.jung=c; else{this.commit();this.jung=j;}
+      return;
+    }
+    // 終声あり → 終声の最後の子音を次の音節の初声へ移動
+    const d=DEC_JONG[this.jong];
+    let baseJong,movedCho;
+    if(d){baseJong=d[0];movedCho=d[1];} else {baseJong=null;movedCho=this.jong;}
+    this.committed+=this._renderBlock(this.cho,this.jung,baseJong);
+    this.cho=movedCho;this.jung=j;this.jong=null;
+  },
+  space(){this.commit();this.committed+=" ";},
+  backspace(){
+    if(this.jong!==null){const d=DEC_JONG[this.jong];this.jong=d?d[0]:null;return;}
+    if(this.jung!==null){const d=DEC_JUNG[this.jung];this.jung=d?d[0]:null;return;}
+    if(this.cho!==null){this.cho=null;return;}
+    if(this.committed.length>0){
+      const last=this.committed[this.committed.length-1];
+      this.committed=this.committed.slice(0,-1);
+      const code=last.charCodeAt(0);
+      if(code>=0xAC00&&code<=0xD7A3){
+        const s=code-0xAC00;
+        this.cho=CHO[Math.floor(s/(21*28))];
+        this.jung=JUNG[Math.floor((s%(21*28))/28)];
+        const ti=s%28;this.jong=ti?JONG[ti]:null;
+        this.backspace();
+      }
+    }
+  }
+};
 
-function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
-function sample(a,n){return shuffle(a).slice(0,n)}
+/* ============================================================ ストレージ（全件保存） ============================================================ */
+const LS_HIST="kwt_history_v1", LS_PERFECT="kwt_perfect_v1", LS_USER="kwt_user_v1";
+function getUserId(){let u=localStorage.getItem(LS_USER);if(!u){u="u-"+Date.now().toString(36)+Math.random().toString(36).slice(2,7);localStorage.setItem(LS_USER,u);}return u;}
+function loadHistory(){try{return JSON.parse(localStorage.getItem(LS_HIST)||"[]");}catch(e){return[];}}
+function saveAnswer(rec){const h=loadHistory();h.push(rec);localStorage.setItem(LS_HIST,JSON.stringify(h));}
+function getPerfectCount(){return parseInt(localStorage.getItem(LS_PERFECT)||"0",10);}
+function incPerfectCount(){const n=getPerfectCount()+1;localStorage.setItem(LS_PERFECT,String(n));return n;}
 
-/* 100語から12語をランダム抽出（重複なし）して問題を組み立てる */
+/* ============================================================ 出題ロジック ============================================================ */
+const PLAN=[...Array(5).fill("jk"),...Array(5).fill("kj"),...Array(2).fill("w")];
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function sample(a,n){return shuffle(a).slice(0,n);}
 function buildQuestions(){
   const picked=sample(WORDS,12);
   return picked.map((w,i)=>{
     const type=PLAN[i];
     let choices=null,correct;
-    if(type==="kj"){
-      // 韓→日 四択：正解＝登録された日本語訳、誤答＝登録ダミー3つ
-      correct=w.ja;
-      choices=shuffle([w.ja,...w.d.slice(0,3)]);
-    }else if(type==="jk"){
-      // 日→韓 四択：正解＝韓国語、誤答＝他の99語からランダム3語
-      correct=w.ko;
-      const dist=sample(WORDS.filter(x=>x.id!==w.id),3).map(x=>x.ko);
-      choices=shuffle([w.ko,...dist]);
-    }else{
-      // 日→韓 書き取り：正解＝韓国語（分かち書き込み完全一致）
-      correct=w.ko;
-    }
+    if(type==="kj"){correct=w.ja;choices=shuffle([w.ja,...w.d.slice(0,3)]);}
+    else if(type==="jk"){correct=w.ko;choices=shuffle([w.ko,...sample(WORDS.filter(x=>x.id!==w.id),3).map(x=>x.ko)]);}
+    else{correct=w.ko;}
     return {word:w,type,choices,correct};
   });
 }
+const DIRECTION={jk:"jp_to_kr",kj:"kr_to_jp",w:"jp_to_kr"};
+const ANS_TYPE={jk:"choice",kj:"choice",w:"writing"};
 
-/* ===== 採点 ===== */
-function calculateQuestionScore(type,isCorrect,t){
-  if(!isCorrect||t>10)return 0;
-  const fast=t<5;
-  if(type==="w")return fast?10:9;
-  return fast?8:7;
+/* 採点 */
+function scoreFor(type,isCorrect,t){
+  if(!isCorrect)return 0;
+  if(type==="w")return t<10?10:9;        // 書き取り：10秒未満=10, 10〜20=9
+  return t<5?8:7;                        // 四択：5秒未満=8, 5〜10=7
 }
-function calculateRank(s){
-  if(s===100)return"S";
-  if(s<=50)return"D";
-  if(s<=70)return"C";
-  if(s<=80)return"B";
-  return"A";
-}
+function rankFor(s){if(s===100)return"S";if(s<=50)return"D";if(s<=70)return"C";if(s<=80)return"B";return"A";}
 
-function show(id){document.querySelectorAll(".screen").forEach(e=>e.classList.remove("on"));document.getElementById(id).classList.add("on");window.scrollTo(0,0)}
+/* ============================================================ 画面遷移 ============================================================ */
+function show(id){document.querySelectorAll(".screen").forEach(e=>e.classList.remove("on"));document.getElementById(id).classList.add("on");window.scrollTo(0,0);}
+
+/* ============================================================ テスト進行 ============================================================ */
+let state=null,timer=null,qStart=0,answered=false;
 
 function startTest(){
-  state={questions:buildQuestions(),idx:0,results:[]};
-  document.getElementById("timerwrap").style.display="block";
+  state={questions:buildQuestions(),idx:0,results:[],testId:"t-"+Date.now().toString(36),userId:getUserId()};
   renderQuestion();
+  show("s-quiz");
 }
 
-/* ===== タイマー ===== */
-let timer=null,qStart=0,answered=false;
+function curLimit(){return state.questions[state.idx].type==="w"?20:10;}
+
 function startTimer(){
   qStart=performance.now();answered=false;
-  const fill=document.getElementById("timerfill");
-  const txt=document.getElementById("timertext");
+  const limit=curLimit(),fill=document.getElementById("tfill"),tt=document.getElementById("time");
   clearInterval(timer);
-  function tick(){
-    const elapsed=(performance.now()-qStart)/1000;
-    const remain=Math.max(0,TIME_LIMIT-elapsed);
-    const pct=remain/TIME_LIMIT*100;
-    fill.style.width=pct+"%";
-    fill.className="timerfill"+(remain<=3?" danger":remain<=5?" warn":"");
-    txt.textContent="残り時間："+remain.toFixed(1)+"秒";
-    if(remain<=0){clearInterval(timer);if(!answered)handleAnswer(null,true)}
-  }
-  tick();
-  timer=setInterval(tick,100);
+  const tick=()=>{
+    const el=(performance.now()-qStart)/1000, remain=Math.max(0,limit-el);
+    fill.style.width=(remain/limit*100)+"%";
+    fill.className="tfill"+(remain<=limit*0.3?" warn":"");
+    tt.textContent=remain.toFixed(1);
+    if(remain<=0){clearInterval(timer);if(!answered)submit("timeout","");}
+  };
+  tick();timer=setInterval(tick,100);
 }
-function elapsedNow(){return Math.min(TIME_LIMIT,(performance.now()-qStart)/1000)}
 
-/* ===== 問題表示 ===== */
 function renderQuestion(){
   const q=state.questions[state.idx];
-  document.getElementById("qcount").textContent="Q"+(state.idx+1)+" / 12";
-  const el=document.getElementById("s-quiz");
-  let html="";
-  if(q.type==="kj"){
-    html+=`<span class="qtype kj">${TYPE_LABEL.kj}</span>`;
-    html+=`<div class="card"><div class="qprompt">次の韓国語の意味を選んでください。</div>
-      <div class="qword ko">${q.word.ko}</div></div>`;
-    html+=`<div class="choices">`+q.choices.map(c=>
-      `<button class="choice" onclick="handleAnswer(this.dataset.v)" data-v="${esc(c)}">
-        <span class="mark"></span><span>${c}</span></button>`).join("")+`</div>`;
-  }else if(q.type==="jk"){
-    html+=`<span class="qtype jk">${TYPE_LABEL.jk}</span>`;
-    html+=`<div class="card"><div class="qprompt">「${q.word.ja}」に当たる韓国語を選んでください。</div></div>`;
-    html+=`<div class="choices">`+q.choices.map(c=>
-      `<button class="choice" onclick="handleAnswer(this.dataset.v)" data-v="${esc(c)}">
-        <span class="mark"></span><span class="ko">${c}</span></button>`).join("")+`</div>`;
+  document.getElementById("prog").textContent=(state.idx+1)+" / 12";
+  const stage=document.getElementById("qstage");
+  if(q.type==="kj"||q.type==="jk"){
+    const display=q.type==="kj"?q.word.ko:q.word.ja;
+    stage.innerHTML=`
+      <div class="qmain"><div class="qword">${esc(display)}</div></div>
+      <div class="qbottom">
+        <div class="choices">${q.choices.map(c=>`<button class="choice" data-v="${esc(c)}" onclick="pick(this.dataset.v)">${esc(c)}</button>`).join("")}</div>
+        <button class="unknown" onclick="submit('unknown','')">わからない</button>
+      </div>`;
   }else{
-    html+=`<span class="qtype w">${TYPE_LABEL.w}</span>`;
-    html+=`<div class="card"><div class="qprompt">「${q.word.ja}」を韓国語で入力してください。</div></div>`;
-    html+=`<input class="winput" id="winput" autocomplete="off" autocapitalize="off"
-        placeholder="ここに入力" oninput="document.getElementById('wbtn').disabled=!this.value.trim()"
-        onkeydown="if(event.key==='Enter'&&this.value.trim())submitWriting()">`;
-    html+=`<button class="btn primary" id="wbtn" disabled onclick="submitWriting()">回答する</button>`;
+    IME.reset();
+    stage.innerHTML=`
+      <div class="qmain" style="flex:0 0 auto;padding-top:5vh;min-height:26vh"><div class="qword">${esc(q.word.ja)}</div></div>
+      <div class="winput" id="winput"></div>
+      ${keyboardHTML()}`;
+    refreshInput();
   }
-  el.innerHTML=html;
-  show("s-quiz");
   startTimer();
-  if(q.type==="w")setTimeout(()=>{const w=document.getElementById("winput");if(w)w.focus()},50);
-}
-function esc(s){return String(s).replace(/"/g,"&quot;")}
-
-function submitWriting(){
-  const el=document.getElementById("winput");
-  if(!el)return;
-  handleAnswer(el.value);
 }
 
-/* ===== 回答処理 ===== */
-function handleAnswer(rawAnswer,timeout=false){
+function pick(v){const q=state.questions[state.idx];submit(v===q.correct?"correct":"incorrect",v);}
+
+/* 回答送信（二重送信防止） */
+function submit(status,userAnswer){
   if(answered)return;answered=true;clearInterval(timer);
-  const q=state.questions[state.idx];
-  const t=elapsedNow();
-  const timedOut=timeout||t>=TIME_LIMIT;
-  let userAns,isCorrect;
-  if(q.type==="w"){
-    userAns=(rawAnswer==null?"":String(rawAnswer)).trim();   // 前後の空白除去
-    isCorrect=!timedOut&&userAns===q.correct;                // 分かち書き込み完全一致
-  }else{
-    userAns=rawAnswer==null?"":rawAnswer;
-    isCorrect=!timedOut&&userAns===q.correct;
-    document.querySelectorAll("#s-quiz .choice").forEach(b=>{
-      b.disabled=true;
-      if(b.dataset.v===q.correct)b.classList.add("correct");
-      else if(b.dataset.v===userAns)b.classList.add("wrong");
-    });
-  }
-  const tShown=timedOut?TIME_LIMIT:t;
-  const score=calculateQuestionScore(q.type,isCorrect,timedOut?99:t);
-  const verdict=timedOut?"timeout":(isCorrect?"correct":"wrong");
-  state.results.push({
-    n:state.idx+1,type:q.type,word:q.word,
-    userAns:timedOut?"（無回答）":(userAns||"（無回答）"),
-    correctText:q.type==="kj"?q.word.ja:q.word.ko,
-    verdict,time:tShown,score,review:!isCorrect
+  const q=state.questions[state.idx],limit=q.type==="w"?20:10;
+  let elapsed=(performance.now()-qStart)/1000;
+  if(status==="timeout")elapsed=limit; else if(elapsed>limit){elapsed=limit;status= status==="correct"?"timeout":status;}
+  const isCorrect=status==="correct";
+  const score=scoreFor(q.type,isCorrect,elapsed);
+  const rec={
+    userId:state.userId,wordId:q.word.id,testId:state.testId,questionNumber:state.idx+1,
+    korean:q.word.ko,japanese:q.word.ja,answerType:ANS_TYPE[q.type],direction:DIRECTION[q.type],
+    userAnswer:userAnswer||"",correctAnswer:q.correct,answerStatus:status,isCorrect,
+    responseTimeMs:Math.round(elapsed*1000),score,answeredAt:new Date().toISOString()
+  };
+  state.results.push(rec);saveAnswer(rec);
+  showOverlay(isCorrect);
+}
+
+/* ○×オーバーレイ */
+function showOverlay(isCorrect){
+  const ov=document.createElement("div");ov.className="overlay";
+  ov.innerHTML=`<div class="ovsym ${isCorrect?"o":"x"}">${isCorrect?"○":"×"}</div>`;
+  document.body.appendChild(ov);
+  setTimeout(()=>{ov.remove();afterAnswer();},isCorrect?1000:2000);
+}
+function afterAnswer(){
+  if(state.idx>=11){finishTest();return;}
+  state.idx++;renderQuestion();
+}
+
+/* ============================================================ キーボード ============================================================ */
+const KB_ROWS=[["ㅂ","ㅈ","ㄷ","ㄱ","ㅅ","ㅛ","ㅕ","ㅑ","ㅐ","ㅔ"],["ㅁ","ㄴ","ㅇ","ㄹ","ㅎ","ㅗ","ㅓ","ㅏ","ㅣ"],["ㅋ","ㅌ","ㅊ","ㅍ","ㅠ","ㅜ","ㅡ"]];
+const SHIFT_MAP={"ㅂ":"ㅃ","ㅈ":"ㅉ","ㄷ":"ㄸ","ㄱ":"ㄲ","ㅅ":"ㅆ","ㅐ":"ㅒ","ㅔ":"ㅖ"};
+let shiftOn=false;
+function keyboardHTML(){
+  let h='<div class="kbd" id="kbd">';
+  KB_ROWS.forEach((row,ri)=>{
+    h+='<div class="krow">';
+    if(ri===2)h+=`<button class="key fn wide" id="shiftkey" onclick="toggleShift()">⇧</button>`;
+    row.forEach(k=>h+=`<button class="key" data-k="${k}" onclick="kbKey('${k}')">${k}</button>`);
+    if(ri===2)h+=`<button class="key fn wide" onclick="kbBack()">⌫</button>`;
+    h+='</div>';
   });
-  setTimeout(()=>renderFeedback(),q.type==="w"?0:350);
+  h+=`<div class="krow ctrl">
+    <button class="key fn" onclick="kbClear()">Clear</button>
+    <button class="key fn wide" onclick="kbSpace()">Space</button>
+    <button class="key send" onclick="kbSend()">回答する</button>
+    <button class="key dontknow" onclick="submit('unknown','')">わからない</button>
+  </div></div>`;
+  return h;
 }
-
-/* ===== 正誤表示 ===== */
-function renderFeedback(){
-  const r=state.results[state.results.length-1];
-  const w=r.word;
-  const el=document.getElementById("s-fb");
-  document.getElementById("timerwrap").style.display="none";
-  let banner,title;
-  if(r.verdict==="correct"){banner="ok";title="正解！";}
-  else if(r.verdict==="timeout"){banner="to";title="時間切れ";}
-  else{banner="ng";title="不正解";}
-
-  let rows="";
-  if(r.verdict==="correct"){
-    rows+=`<div class="fb-row"><span class="k">韓国語</span><span class="v ko">${w.ko}</span></div>`;
-    rows+=`<div class="fb-row"><span class="k">意味</span><span class="v">${w.ja}</span></div>`;
-    rows+=`<div class="fb-row"><span class="k">回答時間</span><span class="v">${r.time.toFixed(1)}秒</span></div>`;
-  }else if(r.verdict==="timeout"){
-    rows+=`<div class="fb-row"><span class="k">正解</span><span class="v ko">${w.ko}</span></div>`;
-    rows+=`<div class="fb-row"><span class="k">意味</span><span class="v">${w.ja}</span></div>`;
-  }else{
-    rows+=`<div class="fb-row"><span class="k">あなたの回答</span><span class="v">${r.userAns}</span></div>`;
-    rows+=`<div class="fb-row"><span class="k">正解</span><span class="v ko">${w.ko}</span></div>`;
-    rows+=`<div class="fb-row"><span class="k">意味</span><span class="v">${w.ja}</span></div>`;
-  }
-  rows+=`<div class="fb-row"><span class="k">獲得点数</span><span class="v">${r.score}点</span></div>`;
-
-  let noteHtml=w.n?`<div class="note">⚠️ <b>注意</b>：${w.n}</div>`:"";
-  const last=state.idx===11;
-  el.innerHTML=`
-    <div class="fb-banner ${banner}"><div class="fb-title">${title}</div></div>
-    <div class="card">${rows}</div>
-    ${noteHtml}
-    <button class="btn primary" onclick="nextQuestion()">${last?"結果を見る":"次へ"}</button>`;
-  show("s-fb");
-}
-
-function nextQuestion(){
-  if(state.idx===11){renderResult();return;}
-  state.idx++;
-  document.getElementById("timerwrap").style.display="block";
-  renderQuestion();
-}
-
-/* ===== 結果画面 ===== */
-function renderResult(){
-  document.getElementById("qcount").textContent="";
-  document.getElementById("timerwrap").style.display="none";
-  const R=state.results;
-  const total=R.reduce((a,r)=>a+r.score,0);
-  const rank=calculateRank(total);
-  const nCorrect=R.filter(r=>r.verdict==="correct").length;
-  const nWrong=R.filter(r=>r.verdict==="wrong").length;
-  const nTimeout=R.filter(r=>r.verdict==="timeout").length;
-  const jk=R.filter(r=>r.type==="jk").reduce((a,r)=>a+r.score,0);
-  const kj=R.filter(r=>r.type==="kj").reduce((a,r)=>a+r.score,0);
-  const wr=R.filter(r=>r.type==="w").reduce((a,r)=>a+r.score,0);
-  const times=R.map(r=>r.time);
-  const avg=times.reduce((a,b)=>a+b,0)/times.length;
-  const corrTimes=R.filter(r=>r.verdict==="correct").map(r=>r.time);
-  const fastestText=corrTimes.length?Math.min(...corrTimes).toFixed(1)+"秒":"—";
-
-  const rankMsg={
-    S:"PERFECT SCORE! 完璧です！",
-    A:"お見事！あと少しで満点です。",
-    B:"good！着実に身についています。",
-    C:"次回の目標はBランク（71点〜）！",
-    D:"間違えた単語を復習して再挑戦しよう。",
-  }[rank];
-  const perfect=rank==="S"?`<div class="perfect pop">★ PERFECT SCORE ★</div>`:"";
-
-  let table=`<table class="qtable"><thead><tr>
-    <th>問</th><th>形式</th><th>単語</th><th>正誤</th><th>時間</th><th>得点</th></tr></thead><tbody>`;
-  R.forEach(r=>{
-    const vc=r.verdict==="correct"?"ok":r.verdict==="wrong"?"ng":"to";
-    const vt=r.verdict==="correct"?"正解":r.verdict==="wrong"?"不正解":"時間切れ";
-    const tl={jk:"日→韓",kj:"韓→日",w:"書取"}[r.type];
-    table+=`<tr><td>Q${r.n}</td><td>${tl}</td><td class="w">${r.word.ko}</td>
-      <td class="${vc}">${vt}</td><td>${r.time.toFixed(1)}秒</td><td>${r.score}点</td></tr>`;
+function applyShiftUI(){
+  document.querySelectorAll('#kbd .key[data-k]').forEach(b=>{
+    const base=b.dataset.k;b.textContent=shiftOn&&SHIFT_MAP[base]?SHIFT_MAP[base]:base;
   });
-  table+=`</tbody></table>`;
+  const sk=document.getElementById("shiftkey");if(sk)sk.classList.toggle("shifton",shiftOn);
+}
+function toggleShift(){shiftOn=!shiftOn;applyShiftUI();}
+function kbKey(base){const j=shiftOn&&SHIFT_MAP[base]?SHIFT_MAP[base]:base;IME.input(j);if(shiftOn){shiftOn=false;applyShiftUI();}refreshInput();}
+function kbBack(){IME.backspace();refreshInput();}
+function kbSpace(){IME.space();refreshInput();}
+function kbClear(){IME.reset();refreshInput();}
+function kbSend(){const q=state.questions[state.idx];const ans=IME.text().trim();submit(ans===q.correct?"correct":"incorrect",ans);}
+function refreshInput(){const el=document.getElementById("winput");if(!el)return;const t=IME.text();el.innerHTML=esc(t)+'<span class="wcaret"></span>';}
 
-  const el=document.getElementById("s-result");
-  el.innerHTML=`
-    <div class="rank-hero">
-      <div class="rank-letter rank-${rank} pop">${rank}</div>
-      <div class="bigscore">${total} / 100点</div>
-      <div class="subscore">${nCorrect} / 12問 正解</div>
-      ${perfect}
-      <div class="specialmsg">${rankMsg}</div>
+/* ============================================================ 結果画面 ============================================================ */
+function finishTest(){
+  const R=state.results,total=R.reduce((a,r)=>a+r.score,0),rank=rankFor(total);
+  const nCorrect=R.filter(r=>r.isCorrect).length,nWrong=12-nCorrect;
+  let perfect=getPerfectCount();if(total===100)perfect=incPerfectCount();
+  const rows=R.map(r=>{
+    const m={correct:["正解","r-ok"],incorrect:["不正解","r-ng"],unknown:["わからない","r-un"],timeout:["時間切れ","r-to"]}[r.answerStatus];
+    return `<tr><td class="no">${r.questionNumber}</td><td class="ko">${esc(r.korean)}</td><td>${esc(r.japanese)}</td><td class="${m[1]}">${m[0]}</td></tr>`;
+  }).join("");
+  document.getElementById("s-result").innerHTML=`
+   <div class="res">
+    <div class="res-head">
+      <div class="res-label">RESULT</div>
+      <div class="res-rank rank-${rank}">${rank}</div>
+      <div class="res-score">${total} / 100</div>
+      <div class="res-stats"><span>正解 <b>${nCorrect}</b></span><span>不正解 <b>${nWrong}</b></span><span>満点達成 <b>${perfect}</b></span></div>
     </div>
-    <div class="divider"></div>
-    <div class="card">
-      <div class="stat-row"><span class="k">日→韓 四択</span><span class="v">${jk} / 40点</span></div>
-      <div class="stat-row"><span class="k">韓→日 四択</span><span class="v">${kj} / 40点</span></div>
-      <div class="stat-row"><span class="k">日→韓 書き取り</span><span class="v">${wr} / 20点</span></div>
+    <div class="res-listwrap">
+      <table class="rtab"><thead><tr><th class="no">No.</th><th>韓国語</th><th>日本語</th><th>結果</th></tr></thead>
+      <tbody>${rows}</tbody></table>
     </div>
-    <div class="card">
-      <div class="stat-row"><span class="k">正解数</span><span class="v">${nCorrect}問</span></div>
-      <div class="stat-row"><span class="k">不正解数</span><span class="v">${nWrong}問</span></div>
-      <div class="stat-row"><span class="k">時間切れ</span><span class="v">${nTimeout}問</span></div>
-      <div class="stat-row"><span class="k">平均回答時間</span><span class="v">${avg.toFixed(1)}秒</span></div>
-      <div class="stat-row"><span class="k">最速回答</span><span class="v">${fastestText}</span></div>
+    <div class="res-btns">
+      <button class="btn primary full" onclick="startTest()">もう一度挑戦する</button>
+      <button class="btn ghost" onclick="renderHistory()">学習履歴を見る</button>
+      <button class="btn ghost" onclick="renderCurve()">忘却曲線を見る</button>
+      <button class="btn line full" onclick="show('s-home')">ホームに戻る</button>
     </div>
-    <div class="section-title">問題別結果</div>
-    <div class="card">${table}</div>
-    <button class="btn orange" onclick="renderReview()">間違えた単語を復習する</button>
-    <button class="btn primary sm" onclick="startTest()">もう一度挑戦する</button>
-    <button class="btn ghost sm" onclick="goHome()">ホームに戻る</button>`;
+   </div>`;
   show("s-result");
-  if(rank==="S"||rank==="A")launchConfetti(rank==="S"?120:50);
 }
 
-function goHome(){
-  document.getElementById("timerwrap").style.display="none";
-  document.getElementById("qcount").textContent="";
-  show("s-start");
+/* ============================================================ 学習履歴 ============================================================ */
+function aggregateByWord(){
+  const h=loadHistory(),map={};
+  h.forEach(r=>{
+    if(!map[r.wordId])map[r.wordId]={wordId:r.wordId,ko:r.korean,ja:r.japanese,count:0,correct:0,last:null,recs:[]};
+    const m=map[r.wordId];m.count++;if(r.isCorrect)m.correct++;m.recs.push(r);
+    if(!m.last||r.answeredAt>m.last.answeredAt)m.last=r;
+  });
+  return Object.values(map).sort((a,b)=>(b.last?.answeredAt||"").localeCompare(a.last?.answeredAt||""));
 }
+const STATUS_JA={correct:"正解",incorrect:"不正解",unknown:"わからない",timeout:"時間切れ"};
+function fmtDate(iso){const d=new Date(iso);const p=n=>String(n).padStart(2,"0");return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;}
+function rateClass(r){return r<0.5?"rate-bad":r<0.8?"rate-mid":"rate-good";}
 
-/* ===== 復習画面 ===== */
-function renderReview(){
-  const wrongs=state.results.filter(r=>r.review);
-  const el=document.getElementById("s-review");
-  let items;
-  if(wrongs.length===0){
-    items=`<div class="card" style="text-align:center">
-      <div style="font-size:40px">🎉</div>
-      <div style="font-weight:900;font-size:18px;margin-top:8px">全問正解！</div>
-      <div style="color:var(--mute);margin-top:6px">復習する単語はありません。</div></div>`;
+function renderHistory(){
+  const list=aggregateByWord();
+  let body;
+  if(list.length===0){
+    body=`<div class="empty">まだ学習履歴がありません。<br>テストを行うと，単語ごとの記録が表示されます。</div>`;
   }else{
-    items=wrongs.map(r=>{
-      const w=r.word;
-      const note=w.n?`<div class="note">⚠️ <b>注意</b>：${w.n}</div>`:"";
-      return `<div class="rv-item">
-        <div class="rv-ko">${w.ko}</div>
-        <div class="rv-ja">${w.ja}</div>
-        <div class="rv-ans">あなたの回答：${r.userAns}</div>
-        <div class="rv-cor">正解：${r.correctText}</div>
-        ${note}</div>`;
+    const rows=list.map(m=>{
+      const rate=m.count?m.correct/m.count:0;
+      return `<tr class="click" onclick="renderWordDetail(${m.wordId})">
+        <td class="ko" style="font-weight:700">${esc(m.ko)}</td>
+        <td style="color:var(--mute)">${esc(m.ja)}</td>
+        <td class="num">${m.count}</td>
+        <td class="num ${rateClass(rate)}">${Math.round(rate*100)}%</td>
+        <td>${STATUS_JA[m.last.answerStatus]}</td></tr>`;
     }).join("");
+    body=`<table class="htab"><thead><tr><th>韓国語</th><th>日本語</th><th class="num">出題</th><th class="num">正答率</th><th>最終</th></tr></thead><tbody>${rows}</tbody></table>`;
   }
-  el.innerHTML=`
-    <h1 class="title">間違えた単語</h1>
-    <p class="lead">${wrongs.length}語の復習対象があります。</p>
-    ${items}
-    <button class="btn primary" onclick="startTest()">もう一度テストする</button>
-    <button class="btn ghost sm" onclick="renderResult()">結果画面に戻る</button>`;
-  show("s-review");
+  document.getElementById("s-history").innerHTML=`
+   <div class="page">
+    <div class="page-head"><button class="back" onclick="show('s-home')">‹</button><h2>学習履歴</h2></div>
+    <div class="page-body">${body}</div>
+   </div>`;
+  show("s-history");
 }
 
-/* ===== 紙吹雪 ===== */
-function launchConfetti(n){
-  const colors=["#ffc800","#58cc02","#1cb0f6","#ff9600","#a560e8","#ff4b4b"];
-  for(let i=0;i<n;i++){
-    const c=document.createElement("div");
-    c.className="confetti";
-    c.style.left=Math.random()*100+"vw";
-    c.style.background=colors[i%colors.length];
-    c.style.animation=`fall ${1.6+Math.random()*1.6}s linear ${Math.random()*0.5}s forwards`;
-    c.style.transform=`rotate(${Math.random()*360}deg)`;
-    document.body.appendChild(c);
-    setTimeout(()=>c.remove(),4000);
-  }
+function renderWordDetail(wordId){
+  const w=WORD_BY_ID[wordId];
+  const recs=loadHistory().filter(r=>r.wordId===wordId).sort((a,b)=>a.answeredAt.localeCompare(b.answeredAt));
+  const dirJa={jp_to_kr:"日→韓",kr_to_jp:"韓→日"};
+  const rows=recs.map(r=>{
+    const dir=r.answerType==="writing"?"書き取り":dirJa[r.direction];
+    return `<tr><td>${fmtDate(r.answeredAt)}</td><td>${dir}</td><td>${STATUS_JA[r.answerStatus]}</td><td class="num">${(r.responseTimeMs/1000).toFixed(1)}秒</td><td class="num">${r.score}点</td></tr>`;
+  }).join("");
+  const note=w.n?`<div class="note">⚠️ ${esc(w.n)}</div>`:"";
+  document.getElementById("s-wdetail").innerHTML=`
+   <div class="page">
+    <div class="page-head"><button class="back" onclick="renderHistory()">‹</button><h2>単語詳細</h2></div>
+    <div class="wdetail-head"><div class="ko">${esc(w.ko)}</div><div class="ja">${esc(w.ja)}</div></div>
+    ${note}
+    <div class="page-body">
+      <table class="htab"><thead><tr><th>日時</th><th>方向</th><th>結果</th><th class="num">時間</th><th class="num">得点</th></tr></thead>
+      <tbody>${rows||'<tr><td colspan="5" style="color:var(--mute);text-align:center;padding:20px">履歴なし</td></tr>'}</tbody></table>
+    </div>
+   </div>`;
+  show("s-wdetail");
 }
+
+/* ============================================================ 忘却曲線 ============================================================ */
+const BUCKETS=[
+  {label:"0〜1日",max:1},{label:"1〜3日",max:3},{label:"3〜7日",max:7},
+  {label:"7〜14日",max:14},{label:"14〜30日",max:30},{label:"30日〜",max:Infinity}
+];
+function bucketIndex(days){for(let i=0;i<BUCKETS.length;i++)if(days<BUCKETS[i].max)return i;return BUCKETS.length-1;}
+function computeCurve(){
+  const h=loadHistory();
+  const byWord={};
+  h.forEach(r=>{(byWord[r.wordId]=byWord[r.wordId]||[]).push(r);});
+  const buckets=BUCKETS.map(()=>({total:0,correct:0}));
+  let analyzedWords=0,pairs=0;
+  Object.values(byWord).forEach(recs=>{
+    recs.sort((a,b)=>a.answeredAt.localeCompare(b.answeredAt));
+    if(recs.length>=2)analyzedWords++;
+    for(let i=1;i<recs.length;i++){
+      const days=(new Date(recs[i].answeredAt)-new Date(recs[i-1].answeredAt))/86400000;
+      const bi=bucketIndex(days);buckets[bi].total++;if(recs[i].isCorrect)buckets[bi].correct++;pairs++;
+    }
+  });
+  return {buckets,analyzedWords,pairs,totalAnswers:h.length};
+}
+function renderCurve(){
+  const c=computeCurve();
+  let body;
+  if(c.pairs===0){
+    body=`<div class="empty">分析に必要な学習履歴がまだ十分にありません。<br>テストを繰り返すと，忘却曲線が表示されます。</div>`;
+  }else{
+    const pts=c.buckets.map((b,i)=>({i,label:BUCKETS[i].label,rate:b.total?b.correct/b.total*100:null,total:b.total}));
+    const valid=pts.filter(p=>p.rate!==null);
+    // 推奨復習：正答率70%を初めて下回るバケット
+    const drop=valid.find(p=>p.rate<70);
+    const recommend=drop?drop.label:"現状維持で問題ありません";
+    const worst=valid.reduce((a,p)=>a===null||p.rate<a.rate?p:a,null);
+    body=`
+      <div class="chartbox">${lineChart(pts)}</div>
+      <div class="curve-stats">
+        <div class="cstat"><div class="k">総回答数</div><div class="v">${c.totalAnswers}</div></div>
+        <div class="cstat"><div class="k">分析対象単語数</div><div class="v">${c.analyzedWords}</div></div>
+        <div class="cstat"><div class="k">最も落ちやすい期間</div><div class="v">${worst?worst.label:"—"}</div></div>
+        <div class="cstat"><div class="k">推奨復習タイミング</div><div class="v">${recommend}</div></div>
+      </div>
+      <div style="color:var(--faint);font-size:11px;line-height:1.7">※ 横軸＝前回学習からの経過日数，縦軸＝正答率。正答率が70%を下回る直前を復習目安としています。</div>`;
+  }
+  document.getElementById("s-curve").innerHTML=`
+   <div class="page">
+    <div class="page-head"><button class="back" onclick="show('s-home')">‹</button><h2>忘却曲線</h2></div>
+    <div class="page-body">${body}</div>
+   </div>`;
+  show("s-curve");
+}
+function lineChart(pts){
+  const W=300,H=170,padL=34,padB=26,padT=10,padR=10;
+  const innerW=W-padL-padR,innerH=H-padT-padB;
+  const x=i=>padL+innerW*(i/(pts.length-1));
+  const y=r=>padT+innerH*(1-r/100);
+  let grid="",lbl="";
+  [0,25,50,75,100].forEach(v=>{const yy=y(v);grid+=`<line x1="${padL}" y1="${yy}" x2="${W-padR}" y2="${yy}" stroke="#26282d" stroke-width="1"/><text x="${padL-5}" y="${yy+3}" fill="#5c616b" font-size="8" text-anchor="end">${v}</text>`;});
+  pts.forEach((p,i)=>{lbl+=`<text x="${x(i)}" y="${H-padB+13}" fill="#8b909a" font-size="7.5" text-anchor="middle">${p.label}</text>`;});
+  const valid=pts.filter(p=>p.rate!==null);
+  const poly=valid.map(p=>`${x(p.i)},${y(p.rate)}`).join(" ");
+  let dots="";valid.forEach(p=>{dots+=`<circle cx="${x(p.i)}" cy="${y(p.rate)}" r="3.2" fill="#4cd964"/><text x="${x(p.i)}" y="${y(p.rate)-7}" fill="#f2f3f5" font-size="8" text-anchor="middle">${Math.round(p.rate)}</text>`;});
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" style="display:block">${grid}<polyline points="${poly}" fill="none" stroke="#4cd964" stroke-width="2"/>${dots}${lbl}</svg>`;
+}
+
+/* ============================================================ utils ============================================================ */
+function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
+getUserId();
 </script>
 </body>
 </html>
