@@ -444,7 +444,8 @@ function startTimer(){
 }
 
 function renderQuestion(){
-  stopSpeak(); // 次の問題へ遷移する際、前の問題の音声が残っていれば停止
+  // 遷移時に音声を止めない（長い単語が途中で切れないよう最後まで再生させる）。
+  // 重複防止は次の正解時に speakKorean() 側の stopSpeak() が担う。
   const q=state.questions[state.idx];
   document.getElementById("prog").textContent=(state.idx+1)+" / 12";
   const stage=document.getElementById("qstage");
