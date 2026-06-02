@@ -79,6 +79,9 @@ button{font-family:inherit}
 .krow.ctrl .key{font-size:13px;font-weight:700;padding:13px 0}
 .key.send{background:var(--gray);color:var(--text);border:1px solid var(--line)}
 .key.dontknow{background:var(--gray);border:1px solid var(--line);color:var(--text)}
+/* 合成母音の専用行：中央寄せ・キー幅を固定して詰めすぎないようにする */
+.krow.vowels{justify-content:center}
+.krow.vowels .key.vowel{flex:0 1 48px;max-width:56px;background:var(--panel2);color:var(--text)}
 
 /* ===== home ===== */
 .home{padding:0 22px;flex:1;display:flex;flex-direction:column;justify-content:center;gap:14px}
@@ -504,7 +507,10 @@ function afterAnswer(){
 
 /* ============================================================ キーボード ============================================================ */
 const KB_ROWS=[["ㅂ","ㅈ","ㄷ","ㄱ","ㅅ","ㅛ","ㅕ","ㅑ","ㅐ","ㅔ"],["ㅁ","ㄴ","ㅇ","ㄹ","ㅎ","ㅗ","ㅓ","ㅏ","ㅣ"],["ㅋ","ㅌ","ㅊ","ㅍ","ㅠ","ㅜ","ㅡ"]];
-const SHIFT_MAP={"ㅂ":"ㅃ","ㅈ":"ㅉ","ㄷ":"ㄸ","ㄱ":"ㄲ","ㅅ":"ㅆ","ㅐ":"ㅒ","ㅔ":"ㅖ"};
+/* 合成母音をShiftなしで直接入力できる専用行（4列目=旧Shift母音 / 5列目=その他の合成母音） */
+const KB_VOWEL_ROWS=[["ㅒ","ㅖ"],["ㅘ","ㅙ","ㅚ","ㅝ","ㅞ","ㅟ","ㅢ"]];
+/* Shiftは濃音（ㅃ等）専用に。母音の合成は専用キーで賄うため母音はSHIFT_MAPから除外 */
+const SHIFT_MAP={"ㅂ":"ㅃ","ㅈ":"ㅉ","ㄷ":"ㄸ","ㄱ":"ㄲ","ㅅ":"ㅆ"};
 let shiftOn=false;
 function keyboardHTML(){
   let h='<div class="korean-keyboard" id="kbd">';
@@ -513,6 +519,11 @@ function keyboardHTML(){
     if(ri===2)h+=`<button class="key fn wide" id="shiftkey" onclick="toggleShift()">⇧</button>`;
     row.forEach(k=>h+=`<button class="key" data-k="${k}" onclick="kbKey('${k}')">${k}</button>`);
     if(ri===2)h+=`<button class="key fn wide" onclick="kbBack()">⌫</button>`;
+    h+='</div>';
+  });
+  KB_VOWEL_ROWS.forEach(row=>{
+    h+='<div class="krow vowels">';
+    row.forEach(k=>h+=`<button class="key vowel" data-k="${k}" onclick="kbKey('${k}')">${k}</button>`);
     h+='</div>';
   });
   h+=`<div class="krow ctrl">
