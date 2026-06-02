@@ -51,10 +51,15 @@ button{font-family:inherit}
 
 /* ===== overlay symbol ===== */
 /* 横:中央 / 縦:中央から画面高の20%上へ / 大きさ1.3倍(46→60vw) / 線2倍(font-weight倍+text-stroke) / 透明度.6維持 */
-.overlay{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:300;pointer-events:auto}
+.overlay{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:300;pointer-events:auto;background:rgba(0,0,0,.72)}
 .ovsym{font-size:60vw;line-height:1;font-weight:600;opacity:.6;transform:translateY(-20vh)}
 .ovsym.o{color:var(--red);-webkit-text-stroke:1.4vw var(--red);text-stroke:1.4vw var(--red)}
 .ovsym.x{color:var(--blue);font-weight:400;-webkit-text-stroke:1.2vw var(--blue);text-stroke:1.2vw var(--blue)}
+/* 不正解/わからない/時間切れ時に正解の単語を表示（×記号は画面上寄りのため下部に配置） */
+.ovans{position:absolute;left:0;right:0;bottom:14%;text-align:center;padding:0 18px;pointer-events:none}
+.ovans .oa-label{color:var(--mute);font-size:12px;font-weight:800;letter-spacing:3px;margin-bottom:8px}
+.ovans .oa-ko{color:var(--text);font-size:clamp(30px,8vw,40px);font-weight:800;line-height:1.25;word-break:break-all}
+.ovans .oa-ja{color:var(--mute);font-size:15px;font-weight:600;margin-top:6px}
 
 /* ===== writing ===== */
 .winput{margin:0 18px;min-height:58px;background:var(--panel);border:1px solid var(--line);border-radius:12px;
@@ -480,13 +485,14 @@ function submit(status,userAnswer){
   };
   state.results.push(rec);saveAnswer(rec);
   if(isCorrect)speakKorean(q.word); // 正解時のみ韓国語音声を再生（不正解/わからない/時間切れは再生しない）
-  showOverlay(isCorrect);
+  showOverlay(isCorrect,q.word);
 }
 
-/* ○×オーバーレイ */
-function showOverlay(isCorrect){
+/* ○×オーバーレイ（不正解時は正解の単語も表示） */
+function showOverlay(isCorrect,word){
   const ov=document.createElement("div");ov.className="overlay";
-  ov.innerHTML=`<div class="ovsym ${isCorrect?"o":"x"}">${isCorrect?"○":"×"}</div>`;
+  const ans=isCorrect?"":`<div class="ovans"><div class="oa-label">正解</div><div class="oa-ko">${esc(word.ko)}</div><div class="oa-ja">${esc(word.ja)}</div></div>`;
+  ov.innerHTML=`<div class="ovsym ${isCorrect?"o":"x"}">${isCorrect?"○":"×"}</div>${ans}`;
   document.body.appendChild(ov);
   setTimeout(()=>{ov.remove();afterAnswer();},isCorrect?1000:2000);
 }
