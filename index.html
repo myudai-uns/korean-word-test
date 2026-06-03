@@ -97,6 +97,7 @@ button{font-family:inherit}
 .home{padding:0 22px;flex:1;display:flex;flex-direction:column;justify-content:center;gap:14px}
 .home h1{font-size:30px;font-weight:800;margin:0;text-align:center}
 .home .sub{color:var(--mute);font-size:14px;text-align:center;line-height:1.7;margin:-4px 0 18px}
+.home .ver{color:var(--faint);font-size:11px;font-weight:700;text-align:center;letter-spacing:1px;margin-top:14px}
 .btn{display:block;width:100%;border:none;border-radius:0;padding:17px;font-size:17px;font-weight:800;cursor:pointer;transition:transform .08s;color:var(--text)}
 .btn:active{transform:translateY(1px)}
 .btn.primary{background:var(--gray-h);color:var(--text);border:1px solid var(--line)}
@@ -160,6 +161,7 @@ button{font-family:inherit}
       <button class="btn primary" onclick="startTest()">テストを始める</button>
       <button class="btn ghost" onclick="renderHistory()">学習履歴を見る</button>
       <button class="btn ghost" onclick="renderCurve()">忘却曲線を見る</button>
+      <div class="ver" id="appver"></div>
     </div>
   </div>
 
@@ -508,7 +510,7 @@ function submit(status,userAnswer){
     responseTimeMs:Math.round(elapsed*1000),score,answeredAt:new Date().toISOString()
   };
   state.results.push(rec);saveAnswer(rec);
-  if(isCorrect)speakKorean(q.word); // 正解時のみ韓国語音声を再生（不正解/わからない/時間切れは再生しない）
+  speakKorean(q.word); // 正解・不正解・わからない・時間切れすべてで正解の韓国語音声を再生（学習のため）
   showOverlay(status,q,userAnswer);
 }
 
@@ -757,6 +759,9 @@ function lineChart(pts){
 
 /* ============================================================ utils ============================================================ */
 function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
+/* バージョン表示（トップページ） */
+const APP_VERSION="v1.6.0 (2026-06-03)";
+(function(){const el=document.getElementById("appver");if(el)el.textContent=APP_VERSION;})();
 getUserId();
 </script>
 </body>
