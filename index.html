@@ -43,6 +43,9 @@ button{font-family:inherit}
 .choice{background:var(--gray);border:none;border-radius:0;padding:18px;font-size:19px;font-weight:700;color:var(--text);
   text-align:center;cursor:pointer;transition:background .12s,transform .08s;min-height:60px}
 .choice:active{transform:scale(.98);background:var(--gray-h)}
+/* 回答後のハイライト：正解=赤 / 選んだ誤答=青 / その他=暗い灰色のまま */
+.choice.correct{background:var(--red);color:#fff}
+.choice.wrong{background:var(--blue);color:#fff}
 
 /* unknown btn */
 .unknown{display:block;margin:0 auto;background:var(--gray);border:1px solid var(--line);color:var(--text);
@@ -51,21 +54,28 @@ button{font-family:inherit}
 
 /* ===== overlay symbol ===== */
 /* 横:中央 / 縦:中央から画面高の20%上へ / 大きさ1.3倍(46→60vw) / 線2倍(font-weight倍+text-stroke) / 透明度.6維持 */
-.overlay{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:300;pointer-events:auto;background:rgba(0,0,0,.72)}
+/* 四択は選択肢の色を見せたいので背景は透明。書き取りは比較テキストを読ませるため暗幕を付ける */
+.overlay{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:300;pointer-events:auto;background:transparent}
+.overlay.backdrop{background:rgba(0,0,0,.72)}
 .ovsym{font-size:60vw;line-height:1;font-weight:600;opacity:.6;transform:translateY(-20vh)}
 .ovsym.o{color:var(--red);-webkit-text-stroke:1.4vw var(--red);text-stroke:1.4vw var(--red)}
 .ovsym.x{color:var(--blue);font-weight:400;-webkit-text-stroke:1.2vw var(--blue);text-stroke:1.2vw var(--blue)}
-/* 不正解/わからない/時間切れ時に正解の単語を表示。問題と選択肢の間（画面中央）に配置 */
+/* 書き取りの正誤比較：入力=青文字 / 正解=赤文字。問題と選択肢の間（画面中央）に配置 */
 .ovans{position:absolute;left:0;right:0;top:52%;transform:translateY(-50%);text-align:center;padding:0 18px;pointer-events:none}
-.ovans .oa-label{color:var(--mute);font-size:12px;font-weight:800;letter-spacing:3px;margin-bottom:8px}
-.ovans .oa-ko{color:var(--text);font-size:clamp(30px,8vw,40px);font-weight:800;line-height:1.25;word-break:break-all}
-.ovans .oa-ja{color:var(--mute);font-size:15px;font-weight:600;margin-top:6px}
+.ovans .oa-row{margin:8px 0}
+.ovans .oa-lab{color:var(--mute);font-size:11px;font-weight:700;letter-spacing:2px;margin-bottom:2px}
+.ovans .oa-ko{font-size:clamp(30px,8vw,40px);font-weight:800;line-height:1.25;word-break:break-all}
+.ovans .oa-ko.correct{color:var(--red)}
+.ovans .oa-ko.wrong{color:var(--blue)}
 
 /* ===== writing ===== */
 .winput{margin:0 18px;min-height:58px;background:var(--panel);border:1px solid var(--line);border-radius:12px;
   display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:700;letter-spacing:1px;padding:10px}
 .wcaret{display:inline-block;width:2px;height:30px;background:var(--text);margin-left:2px;animation:blink 1s steps(1) infinite;vertical-align:middle}
 @keyframes blink{50%{opacity:0}}
+/* 成績連動ヒント（先頭1音節）。ボタンではなく自動表示 */
+.whint{color:var(--gold);font-size:15px;font-weight:700;margin-top:12px}
+.whint b{font-size:22px;margin-left:3px}
 /* 韓国語キーボードは画面下部に固定。PCでは中央寄せ＋最大幅でアプリ幅に揃える */
 .korean-keyboard{position:fixed;left:50%;bottom:0;transform:translateX(-50%);width:100%;max-width:520px;
   padding:8px 6px calc(8px + env(safe-area-inset-bottom));background:var(--panel);border-top:1px solid var(--line);z-index:50}
@@ -109,6 +119,7 @@ button{font-family:inherit}
 .rtab td.no{color:var(--mute);text-align:right;width:34px}
 .rtab td.ko{font-weight:700}
 .rtab .r-ok{color:var(--green)}.rtab .r-ng{color:var(--blue)}.rtab .r-un{color:var(--mute)}.rtab .r-to{color:var(--gold)}
+.hint-badge{display:inline-block;margin-left:6px;padding:1px 6px;border:1px solid var(--line);color:var(--gold);font-size:10px;font-weight:700;vertical-align:middle}
 .res-btns{flex:0 0 auto;display:grid;grid-template-columns:1fr 1fr;gap:9px}
 .res-btns .btn{padding:14px;font-size:14px}
 .res-btns .full{grid-column:1/3}
@@ -411,9 +422,9 @@ const DIRECTION={jk:"jp_to_kr",kj:"kr_to_jp",w:"jp_to_kr"};
 const ANS_TYPE={jk:"choice",kj:"choice",w:"writing"};
 
 /* 採点 */
-function scoreFor(type,isCorrect,t){
+function scoreFor(type,isCorrect,t,isHint){
   if(!isCorrect)return 0;
-  if(type==="w")return t<10?10:9;        // 書き取り：10秒未満=10, 10〜20=9
+  if(type==="w"){const base=t<10?10:9;return isHint?base/2:base;} // 書き取り：10秒未満=10,10〜20=9。ヒント付きは半分(5/4.5)
   return t<5?8:7;                        // 四択：5秒未満=8, 5〜10=7
 }
 function rankFor(s){if(s===100)return"S";if(s<=50)return"D";if(s<=70)return"C";if(s<=80)return"B";return"A";}
@@ -462,8 +473,15 @@ function renderQuestion(){
       </div>`;
   }else{
     IME.reset();
+    // 成績連動：Q1〜Q10の正解数が7問以下ならヒント付き（先頭1音節を自動表示）、8問以上なら通常
+    const choiceCorrect=state.results.slice(0,10).filter(r=>r.isCorrect).length;
+    state.choiceCorrectCount=choiceCorrect;
+    const hint=choiceCorrect<=7;
+    q.isHintProvided=hint;
+    q.hintText=hint?[...q.word.ko.trim()][0]:null;
+    const hintHTML=hint?`<div class="whint">ヒント：<b>${esc(q.hintText)}</b></div>`:"";
     stage.innerHTML=`
-      <div class="qmain" style="flex:0 0 auto;padding-top:5vh;min-height:26vh"><div class="qword">${esc(q.word.ja)}</div></div>
+      <div class="qmain" style="flex:0 0 auto;padding-top:5vh;min-height:24vh"><div class="qword">${esc(q.word.ja)}</div>${hintHTML}</div>
       <div class="winput" id="winput"></div>
       ${keyboardHTML()}`;
     refreshInput();
@@ -480,32 +498,54 @@ function submit(status,userAnswer){
   let elapsed=(performance.now()-qStart)/1000;
   if(status==="timeout")elapsed=limit; else if(elapsed>limit){elapsed=limit;status= status==="correct"?"timeout":status;}
   const isCorrect=status==="correct";
-  const score=scoreFor(q.type,isCorrect,elapsed);
+  const isHint=!!q.isHintProvided;
+  const score=scoreFor(q.type,isCorrect,elapsed,isHint);
   const rec={
     userId:state.userId,wordId:q.word.id,testId:state.testId,questionNumber:state.idx+1,
     korean:q.word.ko,japanese:q.word.ja,answerType:ANS_TYPE[q.type],direction:DIRECTION[q.type],
     userAnswer:userAnswer||"",correctAnswer:q.correct,answerStatus:status,isCorrect,
+    isHintProvided:isHint,hintText:q.hintText||null,
     responseTimeMs:Math.round(elapsed*1000),score,answeredAt:new Date().toISOString()
   };
   state.results.push(rec);saveAnswer(rec);
   if(isCorrect)speakKorean(q.word); // 正解時のみ韓国語音声を再生（不正解/わからない/時間切れは再生しない）
-  showOverlay(isCorrect,q);
+  showOverlay(status,q,userAnswer);
 }
 
-/* ○×オーバーレイ（不正解時は正解の単語も表示） */
-function showOverlay(isCorrect,q){
-  const ov=document.createElement("div");ov.className="overlay";
-  let ans="";
-  if(!isCorrect){
-    const w=q.word;
-    // 韓→日(kj)は日本語が正解表示／日→韓(jk)・書き取り(w)は韓国語が正解表示
-    const main=q.type==="kj"?w.ja:w.ko;
-    const sub =q.type==="kj"?w.ko:w.ja;
-    ans=`<div class="ovans"><div class="oa-label">正解</div><div class="oa-ko">${esc(main)}</div><div class="oa-ja">${esc(sub)}</div></div>`;
+/* 正誤表示：○×記号を重ねつつ、四択は選択肢を色分け、書き取りは入力/正解を色分け表示（「正解」「不正解」テキストは出さない） */
+function showOverlay(status,q,userAnswer){
+  const isCorrect=status==="correct";
+  const ov=document.createElement("div");
+  ov.className="overlay"+(q.type==="w"?" backdrop":"");
+  let inner=`<div class="ovsym ${isCorrect?"o":"x"}">${isCorrect?"○":"×"}</div>`;
+  if(q.type==="w"){
+    inner+=writingAnsHTML(status,q,userAnswer);
+  }else{
+    highlightChoices(q,status,userAnswer); // 実際の選択肢ボタンを色分け（赤=正解 / 青=選んだ誤答）
   }
-  ov.innerHTML=`<div class="ovsym ${isCorrect?"o":"x"}">${isCorrect?"○":"×"}</div>${ans}`;
+  ov.innerHTML=inner;
   document.body.appendChild(ov);
   setTimeout(()=>{ov.remove();afterAnswer();},isCorrect?1000:2000);
+}
+/* 四択：正解の選択肢を赤、ユーザーが選んだ誤答を青で強調。その他は暗い灰色のまま */
+function highlightChoices(q,status,userAnswer){
+  document.querySelectorAll('#qstage .choice').forEach(btn=>{
+    const v=btn.dataset.v;
+    if(v===q.correct)btn.classList.add('correct');
+    else if(status==="incorrect"&&v===userAnswer)btn.classList.add('wrong');
+  });
+}
+/* 書き取り：正解=赤文字 / 不正解=入力(青)+正解(赤) / わからない・時間切れ=正解(赤)のみ */
+function writingAnsHTML(status,q,userAnswer){
+  const ko=esc(q.word.ko);
+  if(status==="incorrect"){
+    return `<div class="ovans">
+      <div class="oa-row"><div class="oa-lab">入力</div><div class="oa-ko wrong">${esc(userAnswer)||"（無回答）"}</div></div>
+      <div class="oa-row"><div class="oa-lab">正解</div><div class="oa-ko correct">${ko}</div></div>
+    </div>`;
+  }
+  // correct / unknown / timeout は韓国語の正解のみ（正解時は音声も再生）
+  return `<div class="ovans"><div class="oa-ko correct">${ko}</div></div>`;
 }
 function afterAnswer(){
   if(state.idx>=11){finishTest();return;}
@@ -519,16 +559,12 @@ const KB_EXTRA_ROWS=[
   ["ㄲ","ㄸ","ㅃ","ㅆ","ㅉ","ㅒ","ㅖ"],       // 濃音 + 合成母音（旧Shift）を1行に
   ["ㅘ","ㅙ","ㅚ","ㅝ","ㅞ","ㅟ","ㅢ"]        // その他の合成母音
 ];
-/* Shiftキー併用も可（濃音）。専用キーがあるのでShiftは無くても全字入力できる */
-const SHIFT_MAP={"ㅂ":"ㅃ","ㅈ":"ㅉ","ㄷ":"ㄸ","ㄱ":"ㄲ","ㅅ":"ㅆ"};
-let shiftOn=false;
+/* Shift・Spaceキーは廃止。濃音/合成母音は専用キー(KB_EXTRA_ROWS)で直接入力する */
 function keyboardHTML(){
   let h='<div class="korean-keyboard" id="kbd">';
-  KB_ROWS.forEach((row,ri)=>{
+  KB_ROWS.forEach(row=>{
     h+='<div class="krow">';
-    if(ri===2)h+=`<button class="key fn wide" id="shiftkey" onclick="toggleShift()">⇧</button>`;
     row.forEach(k=>h+=`<button class="key" data-k="${k}" onclick="kbKey('${k}')">${k}</button>`);
-    if(ri===2)h+=`<button class="key fn wide" onclick="kbBack()">⌫</button>`;
     h+='</div>';
   });
   KB_EXTRA_ROWS.forEach(row=>{
@@ -536,43 +572,43 @@ function keyboardHTML(){
     row.forEach(k=>h+=`<button class="key ex" data-k="${k}" onclick="kbKey('${k}')">${k}</button>`);
     h+='</div>';
   });
+  // Spaceがあった位置にBackspace(⌫)を配置。Clearと横並び
   h+=`<div class="krow ctrl">
     <button class="key fn" onclick="kbClear()">Clear</button>
-    <button class="key fn wide" onclick="kbSpace()">Space</button>
+    <button class="key fn wide" onclick="kbBack()">⌫</button>
     <button class="key send" onclick="kbSend()">回答する</button>
     <button class="key dontknow" onclick="submit('unknown','')">わからない</button>
   </div></div>`;
   return h;
 }
-function applyShiftUI(){
-  document.querySelectorAll('#kbd .key[data-k]').forEach(b=>{
-    const base=b.dataset.k;b.textContent=shiftOn&&SHIFT_MAP[base]?SHIFT_MAP[base]:base;
-  });
-  const sk=document.getElementById("shiftkey");if(sk)sk.classList.toggle("shifton",shiftOn);
-}
-function toggleShift(){shiftOn=!shiftOn;applyShiftUI();}
-function kbKey(base){const j=shiftOn&&SHIFT_MAP[base]?SHIFT_MAP[base]:base;IME.input(j);if(shiftOn){shiftOn=false;applyShiftUI();}refreshInput();}
+function kbKey(base){IME.input(base);refreshInput();}
 function kbBack(){IME.backspace();refreshInput();}
-function kbSpace(){IME.space();refreshInput();}
 function kbClear(){IME.reset();refreshInput();}
-function kbSend(){const q=state.questions[state.idx];const ans=IME.text().trim();submit(ans===q.correct?"correct":"incorrect",ans);}
+function kbSend(){
+  const q=state.questions[state.idx];const ans=IME.text().trim();
+  // Spaceキーを廃止したため、空白は無視して正誤判定（例「무통장 입금」）
+  const norm=s=>s.replace(/\s+/g,"");
+  submit(norm(ans)===norm(q.correct)?"correct":"incorrect",ans);
+}
 function refreshInput(){const el=document.getElementById("winput");if(!el)return;const t=IME.text();el.innerHTML=esc(t)+'<span class="wcaret"></span>';}
 
 /* ============================================================ 結果画面 ============================================================ */
 function finishTest(){
   const R=state.results,total=R.reduce((a,r)=>a+r.score,0),rank=rankFor(total);
+  const totalDisp=total%1===0?total:total.toFixed(1); // ヒント付き4.5点などの小数を正確に表示
   const nCorrect=R.filter(r=>r.isCorrect).length,nWrong=12-nCorrect;
   let perfect=getPerfectCount();if(total===100)perfect=incPerfectCount();
   const rows=R.map(r=>{
     const m={correct:["正解","r-ok"],incorrect:["不正解","r-ng"],unknown:["わからない","r-un"],timeout:["時間切れ","r-to"]}[r.answerStatus];
-    return `<tr><td class="no">${r.questionNumber}</td><td class="ko">${esc(r.korean)}</td><td>${esc(r.japanese)}</td><td class="${m[1]}">${m[0]}</td></tr>`;
+    const hb=r.isHintProvided?'<span class="hint-badge">ヒント</span>':'';
+    return `<tr><td class="no">${r.questionNumber}</td><td class="ko">${esc(r.korean)}</td><td>${esc(r.japanese)}</td><td class="${m[1]}">${m[0]}${hb}</td></tr>`;
   }).join("");
   document.getElementById("s-result").innerHTML=`
    <div class="res">
     <div class="res-head">
       <div class="res-label">RESULT</div>
       <div class="res-rank rank-${rank}">${rank}</div>
-      <div class="res-score">${total} / 100</div>
+      <div class="res-score">${totalDisp} / 100</div>
       <div class="res-stats"><span>正解 <b>${nCorrect}</b></span><span>不正解 <b>${nWrong}</b></span><span>満点達成 <b>${perfect}</b></span></div>
     </div>
     <div class="res-listwrap">
@@ -633,7 +669,7 @@ function renderWordDetail(wordId){
   const recs=loadHistory().filter(r=>r.wordId===wordId).sort((a,b)=>a.answeredAt.localeCompare(b.answeredAt));
   const dirJa={jp_to_kr:"日→韓",kr_to_jp:"韓→日"};
   const rows=recs.map(r=>{
-    const dir=r.answerType==="writing"?"書き取り":dirJa[r.direction];
+    const dir=(r.answerType==="writing"?"書き取り":dirJa[r.direction])+(r.isHintProvided?"・ヒント":"");
     return `<tr><td>${fmtDate(r.answeredAt)}</td><td>${dir}</td><td>${STATUS_JA[r.answerStatus]}</td><td class="num">${(r.responseTimeMs/1000).toFixed(1)}秒</td><td class="num">${r.score}点</td></tr>`;
   }).join("");
   const note=w.n?`<div class="note">⚠️ ${esc(w.n)}</div>`:"";
@@ -662,6 +698,9 @@ function computeCurve(){
   h.forEach(r=>{(byWord[r.wordId]=byWord[r.wordId]||[]).push(r);});
   const buckets=BUCKETS.map(()=>({total:0,correct:0}));
   let analyzedWords=0,pairs=0;
+  // 書き取り正解をヒントなし/ありで区別して集計
+  let unaidedCorrect=0,hintCorrect=0;
+  h.forEach(r=>{ if(r.answerType==="writing"&&r.isCorrect){ r.isHintProvided?hintCorrect++:unaidedCorrect++; } });
   Object.values(byWord).forEach(recs=>{
     recs.sort((a,b)=>a.answeredAt.localeCompare(b.answeredAt));
     if(recs.length>=2)analyzedWords++;
@@ -670,7 +709,7 @@ function computeCurve(){
       const bi=bucketIndex(days);buckets[bi].total++;if(recs[i].isCorrect)buckets[bi].correct++;pairs++;
     }
   });
-  return {buckets,analyzedWords,pairs,totalAnswers:h.length};
+  return {buckets,analyzedWords,pairs,totalAnswers:h.length,unaidedCorrect,hintCorrect};
 }
 function renderCurve(){
   const c=computeCurve();
@@ -691,6 +730,7 @@ function renderCurve(){
         <div class="cstat"><div class="k">分析対象単語数</div><div class="v">${c.analyzedWords}</div></div>
         <div class="cstat"><div class="k">最も落ちやすい期間</div><div class="v">${worst?worst.label:"—"}</div></div>
         <div class="cstat"><div class="k">推奨復習タイミング</div><div class="v">${recommend}</div></div>
+        <div class="cstat"><div class="k">書き取り正解（ヒントなし / あり）</div><div class="v">${c.unaidedCorrect} / ${c.hintCorrect}</div></div>
       </div>
       <div style="color:var(--faint);font-size:11px;line-height:1.7">※ 横軸＝前回学習からの経過日数，縦軸＝正答率。正答率が70%を下回る直前を復習目安としています。</div>`;
   }
