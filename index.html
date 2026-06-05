@@ -104,6 +104,12 @@ button{font-family:inherit}
 .home h1{font-size:30px;font-weight:800;margin:0;text-align:center}
 .home .sub{color:var(--mute);font-size:14px;text-align:center;line-height:1.7;margin:-4px 0 18px}
 .home .ver{color:var(--faint);font-size:11px;font-weight:700;text-align:center;letter-spacing:1px;margin-top:14px}
+/* Section選択リスト */
+.seclist{display:flex;flex-direction:column;gap:8px}
+.secrow{display:flex;align-items:center;background:var(--gray);border:none;color:var(--text);font-size:15px;font-weight:700;padding:14px 16px;cursor:pointer;text-align:left}
+.secrow:active{background:var(--gray-h)}
+.secrow .seccnt{color:var(--faint);font-size:11px;margin-left:auto;margin-right:14px;font-weight:600}
+.secrow .secrank{width:30px;text-align:center;font-size:18px;font-weight:900;color:var(--mute)}
 .btn{display:block;width:100%;border:none;border-radius:0;padding:17px;font-size:17px;font-weight:800;cursor:pointer;transition:transform .08s;color:var(--text)}
 .btn:active{transform:translateY(1px)}
 .btn.primary{background:var(--gray-h);color:var(--text);border:1px solid var(--line)}
@@ -183,12 +189,26 @@ button{font-family:inherit}
     <div class="home">
       <h1>한국어 단어 테스트</h1>
       <div class="sub">新出9＋復習3の全12問<br>四択10秒 / 書き取り20秒・満点100点</div>
-      <button class="btn primary" onclick="startTest()">テストを始める</button>
+      <button class="btn primary" onclick="show('s-level')">テストを始める</button>
       <button class="btn ghost" onclick="renderHistory()">学習履歴を見る</button>
       <button class="btn ghost" onclick="renderCurve()">忘却曲線を見る</button>
       <div class="ver" id="appver"></div>
     </div>
   </div>
+
+  <!-- LEVEL SELECT -->
+  <div class="screen" id="s-level">
+    <div class="home">
+      <h1>難易度を選択</h1>
+      <button class="btn ghost" onclick="levelNA('初級')">初級</button>
+      <button class="btn primary" onclick="renderSectionSelect()">中級</button>
+      <button class="btn ghost" onclick="levelNA('上級')">上級</button>
+      <div class="sub" id="level-note" style="min-height:20px;margin:6px 0 0"></div>
+      <button class="btn line" onclick="show('s-home')">ホームに戻る</button>
+    </div>
+  </div>
+  <!-- SECTION SELECT (中級) -->
+  <div class="screen" id="s-section"></div>
 
   <!-- QUIZ -->
   <div class="screen" id="s-quiz">
@@ -207,6 +227,7 @@ button{font-family:inherit}
   <div class="screen" id="s-curve"></div>
 </div>
 
+<script src="words-middle.js"></script>
 <script>
 /* ============================================================ 単語データ 100語 ============================================================ */
 const WORDS=[
@@ -342,6 +363,32 @@ const IMG_KW={
 };
 function wordImgURL(w){return `https://loremflickr.com/480/280/${encodeURIComponent(IMG_KW[w.id]||"korea")}?lock=${w.id}`;}
 
+/* ============================================================ Section（中級27分割） ============================================================ */
+/* Section01=既存100語(id1-100)。Section02-27=words-middle.js（PDF2662語からSection01重複を除外しシャッフル固定済み） */
+MIDDLE_WORDS.forEach(w=>WORD_BY_ID[w.id]=w);
+const SECTION_IDS={1:WORDS.map(w=>w.id)};
+MIDDLE_WORDS.forEach(w=>{(SECTION_IDS[w.sec]=SECTION_IDS[w.sec]||[]).push(w.id);});
+const SECTION_COUNT=27;
+const secId=n=>"middle-"+String(n).padStart(2,"0");
+let curSection=1;
+function sectionPoolWords(){return (SECTION_IDS[curSection]||SECTION_IDS[1]).map(id=>WORD_BY_ID[id]);}
+
+/* Sectionごとの最高ランク保存 */
+const LS_SECTIONS="kwt_sections_v1";
+const RANK_VAL={S:5,A:4,B:3,C:2,D:1};
+function loadSections(){try{return JSON.parse(localStorage.getItem(LS_SECTIONS)||"{}");}catch(e){return{};}}
+function saveSections(s){localStorage.setItem(LS_SECTIONS,JSON.stringify(s));}
+function getSectionRec(n){
+  const all=loadSections(),id=secId(n);
+  return all[id]||{sectionId:id,level:"middle",sectionNumber:n,wordIds:SECTION_IDS[n]||[],bestRank:null,updatedAt:""};
+}
+function updateSectionRank(n,rank){
+  const all=loadSections(),id=secId(n),rec=all[id]||getSectionRec(n);
+  if(!rec.bestRank||RANK_VAL[rank]>RANK_VAL[rec.bestRank]){ // 過去最高を上回った場合のみ更新
+    rec.bestRank=rank;rec.updatedAt=new Date().toISOString();all[id]=rec;saveSections(all);
+  }
+}
+
 /* ============================================================ ハングルIME（2ボル式 文字合成） ============================================================ */
 const CHO=["ㄱ","ㄲ","ㄴ","ㄷ","ㄸ","ㄹ","ㅁ","ㅂ","ㅃ","ㅅ","ㅆ","ㅇ","ㅈ","ㅉ","ㅊ","ㅋ","ㅌ","ㅍ","ㅎ"];
 const JUNG=["ㅏ","ㅐ","ㅑ","ㅒ","ㅓ","ㅔ","ㅕ","ㅖ","ㅗ","ㅘ","ㅙ","ㅚ","ㅛ","ㅜ","ㅝ","ㅞ","ㅟ","ㅠ","ㅡ","ㅢ","ㅣ"];
@@ -439,9 +486,14 @@ function displayScore(st,nowMs){
 function overallCondition(nowMs){const s=loadStats();let t=0;WORDS.forEach(w=>t+=displayScore(getStat(w.id,s),nowMs));return t/WORDS.length;}
 function reviewNeedCount(nowMs){const s=loadStats();return WORDS.filter(w=>displayScore(getStat(w.id,s),nowMs)<70).length;}
 
-/* --- 周回・出題進捗 --- */
-function loadProgress(){try{return JSON.parse(localStorage.getItem(LS_PROG)||"null")||{cycleNumber:1,served:[],lastTestIds:[],prevTestIds:[]};}catch(e){return{cycleNumber:1,served:[],lastTestIds:[],prevTestIds:[]};}}
-function saveProgress(p){localStorage.setItem(LS_PROG,JSON.stringify(p));}
+/* --- 周回・出題進捗（Sectionごとに保持。旧単一形式はmiddle-01へ移行） --- */
+function _progAll(){
+  let all;try{all=JSON.parse(localStorage.getItem(LS_PROG)||"{}")||{};}catch(e){all={};}
+  if(all.cycleNumber!==undefined)all={"middle-01":all};
+  return all;
+}
+function loadProgress(){return _progAll()[secId(curSection)]||{cycleNumber:1,served:[],lastTestIds:[],prevTestIds:[]};}
+function saveProgress(p){const all=_progAll();all[secId(curSection)]=p;localStorage.setItem(LS_PROG,JSON.stringify(all));}
 
 /* --- 直近セッションの変化（今回の変化タブ用） --- */
 function loadSession(){try{return JSON.parse(localStorage.getItem(LS_SESS)||"null");}catch(e){return null;}}
@@ -487,28 +539,33 @@ function _speakTTS(text){
 const PLAN=[...Array(5).fill("jk"),...Array(5).fill("kj"),...Array(2).fill("w")];
 function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
 function sample(a,n){return shuffle(a).slice(0,n);}
-const ALL_IDS=WORDS.map(w=>w.id);
-
-/* idリスト(+source)からPLANに沿って12問を生成 */
+/* idリスト(+source)からPLANに沿って12問を生成。誤答は現在Sectionの単語群から作る */
 function makeQuestionsFromIds(list){
+  const pool=sectionPoolWords();
   return list.slice(0,12).map((c,i)=>{
     const w=WORD_BY_ID[c.id],type=PLAN[i];
     let choices=null,correct;
-    if(type==="kj"){correct=w.ja;choices=shuffle([w.ja,...w.d.slice(0,3)]);}
-    else if(type==="jk"){correct=w.ko;choices=shuffle([w.ko,...sample(WORDS.filter(x=>x.id!==w.id),3).map(x=>x.ko)]);}
+    if(type==="kj"){
+      correct=w.ja;
+      // 手作りの誤答(d)があれば優先。中級語はSection内の他単語の意味から重複なしで生成
+      const ds=w.d?w.d.slice(0,3):[...new Set(shuffle(pool.filter(x=>x.id!==w.id&&x.ja!==w.ja).map(x=>x.ja)))].slice(0,3);
+      choices=shuffle([w.ja,...ds]);
+    }
+    else if(type==="jk"){correct=w.ko;choices=shuffle([w.ko,...sample(pool.filter(x=>x.id!==w.id),3).map(x=>x.ko)]);}
     else{correct=w.ko;}
     return {word:w,type,choices,correct,source:c.source};
   });
 }
 
-/* 復習枠の候補を優先順位順に並べて n 件返す */
+/* 復習枠の候補を優先順位順に並べて n 件返す（現在Sectionの単語のみ） */
 function pickReview(n,excludeIds,prog,stats){
   if(n<=0)return[];
+  const poolSet=new Set(SECTION_IDS[curSection]||SECTION_IDS[1]);
   const exclude=new Set(excludeIds);
   const last=prog.lastTestIds||[],prev=prog.prevTestIds||[];
   const blocked=new Set(last.filter(id=>prev.includes(id))); // 直近2回連続→3回目を避ける
   const cand=[];
-  const push=arr=>arr.forEach(id=>{if(!exclude.has(id)&&!blocked.has(id)&&!cand.includes(id))cand.push(id);});
+  const push=arr=>arr.forEach(id=>{if(poolSet.has(id)&&!exclude.has(id)&&!blocked.has(id)&&!cand.includes(id))cand.push(id);});
   const slow=id=>{const s=stats[id];return s&&s.lastAnswerStatus==="correct"&&s.averageResponseTimeMs>(s.lastAnswerType==="writing"?10000:5000);};
   push(last.filter(id=>{const s=stats[id];return s&&["incorrect","timeout","unknown"].includes(s.lastAnswerStatus);})); // 1.直前で不正解等
   push(last.filter(slow));                                                                                              // 2.直前で正解だが遅い
@@ -517,21 +574,22 @@ function pickReview(n,excludeIds,prog,stats){
   return cand.slice(0,n);
 }
 
-/* 通常テスト：新出枠9＋復習枠3。周回・出題進捗を更新 */
+/* 通常テスト：新出枠9＋復習枠3。現在Sectionの単語群と進捗で管理 */
 function buildQuestions(){
   const prog=loadProgress(),stats=loadStats();
+  const POOL_IDS=SECTION_IDS[curSection]||SECTION_IDS[1];
   let served=new Set(prog.served||[]);
   const NEW_TARGET=9;
   let newIds=[];
-  for(const id of shuffle(ALL_IDS.filter(id=>!served.has(id)))){ if(newIds.length>=NEW_TARGET)break; newIds.push(id); served.add(id); }
+  for(const id of shuffle(POOL_IDS.filter(id=>!served.has(id)))){ if(newIds.length>=NEW_TARGET)break; newIds.push(id); served.add(id); }
   // 周回内の未出題が9語未満→この周回を出し切り、次の周回を開始して補充
   if(newIds.length<NEW_TARGET){
     prog.cycleNumber=(prog.cycleNumber||1)+1; served=new Set();
-    for(const id of shuffle(ALL_IDS.filter(id=>!newIds.includes(id)))){ if(newIds.length>=NEW_TARGET)break; newIds.push(id); served.add(id); }
+    for(const id of shuffle(POOL_IDS.filter(id=>!newIds.includes(id)))){ if(newIds.length>=NEW_TARGET)break; newIds.push(id); served.add(id); }
   }
   const reviewIds=pickReview(12-newIds.length,newIds,prog,stats);
   let chosen=newIds.map(id=>({id,source:"new"})).concat(reviewIds.map(id=>({id,source:"review"})));
-  if(chosen.length<12){ const used=new Set(chosen.map(c=>c.id)); for(const id of shuffle(ALL_IDS.filter(id=>!used.has(id)))){ if(chosen.length>=12)break; chosen.push({id,source:"review"}); } }
+  if(chosen.length<12){ const used=new Set(chosen.map(c=>c.id)); for(const id of shuffle(POOL_IDS.filter(id=>!used.has(id)))){ if(chosen.length>=12)break; chosen.push({id,source:"review"}); } }
   chosen=shuffle(chosen).slice(0,12);
   // 進捗保存
   prog.served=Array.from(served);
@@ -541,10 +599,11 @@ function buildQuestions(){
   return makeQuestionsFromIds(chosen);
 }
 
-/* 復習テスト：指定idだけ（不足分は他で補い12問に） */
+/* 復習テスト：指定idだけ（不足分は現在Sectionから補い12問に） */
 function buildReviewQuestions(ids){
   let pool=ids.slice();
-  if(pool.length<12){ const used=new Set(pool); for(const id of shuffle(ALL_IDS.filter(id=>!used.has(id)))){ if(pool.length>=12)break; pool.push(id); } }
+  const POOL_IDS=SECTION_IDS[curSection]||SECTION_IDS[1];
+  if(pool.length<12){ const used=new Set(pool); for(const id of shuffle(POOL_IDS.filter(id=>!used.has(id)))){ if(pool.length>=12)break; pool.push(id); } }
   const list=shuffle(pool.slice(0,12)).map(id=>({id,source:"review"}));
   const prog=loadProgress(); prog.prevTestIds=prog.lastTestIds||[]; prog.lastTestIds=list.map(c=>c.id); saveProgress(prog);
   return makeQuestionsFromIds(list);
@@ -601,10 +660,9 @@ function renderQuestion(){
   const stage=document.getElementById("qstage");
   if(q.type==="kj"||q.type==="jk"){
     const display=q.type==="kj"?q.word.ko:q.word.ja;
+    const imgHTML=IMG_KW[q.word.id]?`<div class="qimg"><img src="${wordImgURL(q.word)}" alt="" onerror="this.parentElement.style.display='none'"></div>`:"";
     stage.innerHTML=`
-      <div class="qmain"><div class="qword">${esc(display)}</div>
-        <div class="qimg"><img src="${wordImgURL(q.word)}" alt="" onerror="this.parentElement.style.display='none'"></div>
-      </div>
+      <div class="qmain"><div class="qword">${esc(display)}</div>${imgHTML}</div>
       <div class="qbottom">
         <div class="choices">${q.choices.map(c=>`<button class="choice" data-v="${esc(c)}" onclick="pick(this.dataset.v)">${esc(c)}</button>`).join("")}</div>
         <button class="unknown" onclick="submit('unknown','')">わからない</button>
@@ -616,7 +674,7 @@ function renderQuestion(){
     state.choiceCorrectCount=choiceCorrect;
     const hint=choiceCorrect<=7;
     q.isHintProvided=hint;
-    q.hintText=hint?[...q.word.ko.trim()][0]:null;
+    q.hintText=hint?([...q.word.ko].find(ch=>/[가-힣]/.test(ch))||[...q.word.ko.trim()][0]):null;
     const hintHTML=hint?`<div class="whint">ヒント：<b>${esc(q.hintText)}</b></div>`:"";
     stage.innerHTML=`
       <div class="qmain" style="flex:0 0 auto;padding-top:5vh;min-height:24vh"><div class="qword">${esc(q.word.ja)}</div>${hintHTML}</div>
@@ -737,8 +795,8 @@ function kbKey(base){IME.input(base);refreshInput();}
 function kbBack(){IME.backspace();refreshInput();}
 function kbSend(){
   const q=state.questions[state.idx];const ans=IME.text().trim();
-  // Spaceキーを廃止したため、空白は無視して正誤判定（例「무통장 입금」）
-  const norm=s=>s.replace(/\s+/g,"");
+  // Spaceキー廃止のため空白は無視。キーボードで打てない記号(〜等)も無視して判定
+  const norm=s=>s.replace(/[\s~〜・･]/g,"");
   submit(norm(ans)===norm(q.correct)?"correct":"incorrect",ans);
 }
 function refreshInput(){const el=document.getElementById("winput");if(!el)return;const t=IME.text();el.innerHTML=esc(t)+'<span class="wcaret"></span>';}
@@ -749,6 +807,7 @@ function finishTest(){
   const totalDisp=total%1===0?total:total.toFixed(1); // ヒント付き4.5点などの小数を正確に表示
   const nCorrect=R.filter(r=>r.isCorrect).length,nWrong=12-nCorrect;
   let perfect=getPerfectCount();if(total===100)perfect=incPerfectCount();
+  if(!state.isReview)updateSectionRank(curSection,rank); // 過去最高ランクを上回った場合のみ更新
   // 今回の変化（記憶コンディション・要復習語数・単語別変化）を保存
   const nowMs=Date.now();
   const changes=R.map(r=>({id:r.wordId,ko:r.korean,ja:r.japanese,before:Math.round(r.memoryScoreBefore),after:Math.round(r.memoryScoreAfter)}));
@@ -942,12 +1001,34 @@ function curveForecast(now){
     <div style="color:var(--faint);font-size:11px;margin:14px 0 6px">記憶率が70%を下回る見込みの単語（上位20）</div>
     <table class="htab"><thead><tr><th>韓国語</th><th>日本語</th><th class="num">現在</th></tr></thead><tbody>${listRows||'<tr><td colspan="3" style="color:var(--mute);text-align:center;padding:20px">対象なし</td></tr>'}</tbody></table>`;
 }
-function startReviewTest(ids){startTest(ids);}
+function startReviewTest(ids){curSection=1;startTest(ids);} // 復習予報はSection01(基本100語)ベース
+
+/* ============================================================ 難易度・Section選択画面 ============================================================ */
+function levelNA(name){
+  const el=document.getElementById("level-note");
+  if(el){el.textContent=name+"は準備中です";setTimeout(()=>{if(el.textContent===name+"は準備中です")el.textContent="";},2000);}
+}
+function renderSectionSelect(){
+  const rows=Array.from({length:SECTION_COUNT},(_,i)=>{
+    const n=i+1,rec=getSectionRec(n),rank=rec.bestRank;
+    return `<button class="secrow" onclick="startSectionTest(${n})">
+      <span>Section ${String(n).padStart(2,"0")}</span>
+      <span class="seccnt">${(SECTION_IDS[n]||[]).length}語</span>
+      <span class="secrank ${rank?("rank-"+rank):""}">${rank||"-"}</span></button>`;
+  }).join("");
+  document.getElementById("s-section").innerHTML=`
+   <div class="page">
+    <div class="page-head"><button class="back" onclick="show('s-level')">‹</button><h2>中級 Section選択</h2></div>
+    <div class="page-body"><div class="seclist">${rows}</div></div>
+   </div>`;
+  show("s-section");
+}
+function startSectionTest(n){curSection=n;startTest();}
 
 /* ============================================================ utils ============================================================ */
 function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
 /* バージョン表示（トップページ） */
-const APP_VERSION="v1.8.0 (2026-06-03)";
+const APP_VERSION="v1.9.0 (2026-06-05)";
 (function(){const el=document.getElementById("appver");if(el)el.textContent=APP_VERSION;})();
 getUserId();
 </script>
