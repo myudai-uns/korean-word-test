@@ -545,19 +545,67 @@ function _speakTTS(text){
 const PLAN=[...Array(5).fill("jk"),...Array(5).fill("kj"),...Array(2).fill("w")];
 function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
 function sample(a,n){return shuffle(a).slice(0,n);}
-/* idリスト(+source)からPLANに沿って12問を生成。誤答は現在Sectionの単語群から作る */
+/* ---- 紛らわしい選択肢の生成（品詞一致＋類似度スコア） ---- */
+/* 品詞判定: 〜다=用言（訳が い/だ 終わり=形容詞、他=動詞）、訳が に/く/と 終わり=副詞、他=名詞 */
+function posOf(w){
+  if(w._pos)return w._pos;
+  const j=(w.ja||"").split(/[、,（(]/)[0].trim();
+  let p;
+  if(/다$/.test(w.ko.replace(/\s/g,"")))p=/(い|だ)$/.test(j)?"adj":"verb";
+  else if(j.length>=2&&/[にくと]$/.test(j))p="adv";
+  else p="noun";
+  return w._pos=p;
+}
+/* 韓国語の見た目の紛らわしさ：頭音節・末尾一致、共有音節、長さ近似 */
+function simKo(a,b){
+  const A=[...a.ko.replace(/[^가-힣]/g,"")],B=[...b.ko.replace(/[^가-힣]/g,"")];
+  let s=0;
+  if(A[0]===B[0])s+=3;
+  if(A[A.length-1]===B[B.length-1])s+=2;
+  s+=Math.max(0,2-Math.abs(A.length-B.length));
+  const setB=new Set(B);new Set(A).forEach(ch=>{if(setB.has(ch))s+=1;});
+  return s;
+}
+/* 日本語訳の紛らわしさ：共有漢字＋長さ近似 */
+function simJa(a,b){
+  const A=new Set([...a.ja].filter(c=>/[一-龯々]/.test(c)));
+  let s=0;new Set([...b.ja]).forEach(c=>{if(A.has(c))s+=2;});
+  s+=Math.max(0,2-Math.abs(a.ja.length-b.ja.length))*0.5;
+  return s;
+}
+/* 第一義（最初の訳語）。同義語を誤答に混ぜない判定に使う */
+function jaHead(w){return (w.ja||"").split(/[、,（(]/)[0].trim();}
+/* 品詞を合わせつつ類似度上位から3つ選ぶ（足りない時のみ段階的に緩和） */
+function pickDistractors(w,pool,key){
+  const pos=posOf(w);
+  // 同義語（第一義が同じ）を除外：日→韓で正解が2つにならないように
+  const base=pool.filter(x=>x.id!==w.id&&x[key]!==w[key]&&x.ko!==w.ko&&jaHead(x)!==jaHead(w));
+  let cands=base.filter(x=>posOf(x)===pos);
+  if(cands.length<3)cands=base.filter(x=>(pos==="adj"||pos==="verb")?(posOf(x)==="adj"||posOf(x)==="verb"):(posOf(x)==="noun"||posOf(x)==="adv")); // 用言同士/体言同士
+  if(cands.length<3)cands=base;
+  const sim=key==="ko"?simKo:simJa;
+  const scored=shuffle(cands).map(x=>({x,s:sim(w,x)})).sort((a,b)=>b.s-a.s);
+  const picked=[],used=new Set([w[key]]);
+  for(const t of shuffle(scored.slice(0,8))){ if(picked.length>=3)break; if(!used.has(t.x[key])){picked.push(t.x[key]);used.add(t.x[key]);} } // 類似上位8からランダムに
+  for(const t of scored){ if(picked.length>=3)break; if(!used.has(t.x[key])){picked.push(t.x[key]);used.add(t.x[key]);} }
+  return picked;
+}
+
+/* 誤答候補は同レベルの全語彙から（強雨量/降水量のような紛らわしいペアを拾えるように） */
+function levelAllWords(){return curLevel==="beginner"?BEGINNER_WORDS:WORDS.concat(MIDDLE_WORDS);}
+
+/* idリスト(+source)からPLANに沿って12問を生成。誤答は品詞を合わせ同レベル全体から紛らわしい語を選ぶ */
 function makeQuestionsFromIds(list){
-  const pool=sectionPoolWords();
+  const pool=levelAllWords();
   return list.slice(0,12).map((c,i)=>{
     const w=WORD_BY_ID[c.id],type=PLAN[i];
     let choices=null,correct;
     if(type==="kj"){
       correct=w.ja;
-      // 手作りの誤答(d)があれば優先。中級語はSection内の他単語の意味から重複なしで生成
-      const ds=w.d?w.d.slice(0,3):[...new Set(shuffle(pool.filter(x=>x.id!==w.id&&x.ja!==w.ja).map(x=>x.ja)))].slice(0,3);
+      const ds=w.d?w.d.slice(0,3):pickDistractors(w,pool,"ja"); // 手作り誤答(d)があれば優先
       choices=shuffle([w.ja,...ds]);
     }
-    else if(type==="jk"){correct=w.ko;choices=shuffle([w.ko,...sample(pool.filter(x=>x.id!==w.id),3).map(x=>x.ko)]);}
+    else if(type==="jk"){correct=w.ko;choices=shuffle([w.ko,...pickDistractors(w,pool,"ko")]);}
     else{correct=w.ko;}
     return {word:w,type,choices,correct,source:c.source};
   });
@@ -1035,7 +1083,7 @@ function startSectionTest(n){curSection=n;startTest();}
 /* ============================================================ utils ============================================================ */
 function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
 /* バージョン表示（トップページ） */
-const APP_VERSION="v1.10.0 (2026-06-06)";
+const APP_VERSION="v1.11.0 (2026-06-06)";
 (function(){const el=document.getElementById("appver");if(el)el.textContent=APP_VERSION;})();
 getUserId();
 </script>
