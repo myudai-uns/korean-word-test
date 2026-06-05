@@ -36,6 +36,9 @@ button{font-family:inherit}
 .qstage{flex:1;display:flex;flex-direction:column;min-height:0}
 .qmain{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:8vh 20px 0;text-align:center}
 .qword{font-size:clamp(34px,9vw,46px);font-weight:800;line-height:1.25;word-break:break-all}
+/* 単語と選択肢の間に表示する関連画像 */
+.qimg{margin-top:3vh;display:flex;justify-content:center;width:100%}
+.qimg img{width:min(80%,360px);max-height:24vh;object-fit:cover;border:1px solid var(--line);display:block;background:var(--panel)}
 .qbottom{padding:0 18px calc(18px + env(safe-area-inset-bottom))}
 
 /* choices */
@@ -87,20 +90,20 @@ button{font-family:inherit}
 .key.wide{flex:1.5}
 .key.fn{background:var(--panel2);color:var(--mute);font-size:13px;font-weight:700}
 .key.shifton{background:var(--gray-h);color:var(--text);border:1px solid var(--line)}
+/* 操作行：わからない(左) / 回答する(中央・大・緑) / ⌫(右) */
 .krow.ctrl .key{font-size:13px;font-weight:700;padding:13px 0}
-.key.send{background:var(--gray);color:var(--text);border:1px solid var(--line)}
+.key.send{flex:2;background:var(--green);color:#06280f;border:none;font-size:16px;font-weight:800}
+.key.send:active{background:#3fbf55}
 .key.dontknow{background:var(--gray);border:1px solid var(--line);color:var(--text)}
-/* 濃音・合成母音の専用行：中央寄せ・キー幅を固定して詰めすぎないようにする */
+/* 濃音・合成母音の専用行（下2行）：中央寄せ・縦幅は通常キーの75% */
 .krow.extra{justify-content:center}
-.krow.extra .key.ex{flex:0 1 48px;max-width:56px;background:var(--panel2);color:var(--text)}
+.krow.extra .key.ex{flex:0 1 48px;max-width:56px;background:var(--panel2);color:var(--text);padding:6px 0;min-height:34px}
 
 /* ===== home ===== */
 .home{padding:0 22px;flex:1;display:flex;flex-direction:column;justify-content:center;gap:14px}
 .home h1{font-size:30px;font-weight:800;margin:0;text-align:center}
 .home .sub{color:var(--mute);font-size:14px;text-align:center;line-height:1.7;margin:-4px 0 18px}
 .home .ver{color:var(--faint);font-size:11px;font-weight:700;text-align:center;letter-spacing:1px;margin-top:14px}
-.home .homeprog{background:var(--panel);border:1px solid var(--line);padding:11px 13px;text-align:center;color:var(--mute);font-size:13px;font-weight:700;line-height:1.7;margin-bottom:6px}
-.home .homeprog b{color:var(--text)}
 .btn{display:block;width:100%;border:none;border-radius:0;padding:17px;font-size:17px;font-weight:800;cursor:pointer;transition:transform .08s;color:var(--text)}
 .btn:active{transform:translateY(1px)}
 .btn.primary{background:var(--gray-h);color:var(--text);border:1px solid var(--line)}
@@ -180,7 +183,6 @@ button{font-family:inherit}
     <div class="home">
       <h1>한국어 단어 테스트</h1>
       <div class="sub">新出9＋復習3の全12問<br>四択10秒 / 書き取り20秒・満点100点</div>
-      <div class="homeprog" id="homeprog"></div>
       <button class="btn primary" onclick="startTest()">テストを始める</button>
       <button class="btn ghost" onclick="renderHistory()">学習履歴を見る</button>
       <button class="btn ghost" onclick="renderCurve()">忘却曲線を見る</button>
@@ -324,6 +326,21 @@ const CATS={
 };
 const CAT_BY_ID={};Object.entries(CATS).forEach(([c,ids])=>ids.forEach(id=>CAT_BY_ID[id]=c));
 WORDS.forEach(w=>w.cat=CAT_BY_ID[w.id]||"その他");
+
+/* 単語ごとの画像検索キーワード（英語）。ネット上の関連写真(Flickr/loremflickr)をキーワードで取得し、lock=idで単語ごとに固定 */
+const IMG_KW={
+ 1:"soap,laundry",2:"rain",3:"face,portrait",4:"naughty,child",5:"soup,ingredients",6:"forgetful,memo",7:"mopping,cleaning",8:"rubber,shoes",9:"orphanage",10:"invoice,bill",
+ 11:"coins,saving",12:"soup,bowl",13:"books,literature",14:"korea,traditional,music",15:"travel,journal",16:"wedding,ring",17:"sesame,salt",18:"checklist,routine",19:"race,last",20:"stream,creek",
+ 21:"airconditioner",22:"square,shape",23:"elderly,care",24:"woman,single",25:"man,single",26:"ironing",27:"bob,hairstyle",28:"moon,night",29:"cigarette",30:"bathhouse,sauna",
+ 31:"baby,birthday",32:"prison,cell",33:"single,person",34:"oriental,painting",35:"secret,talk",36:"lantern,light",37:"leisure,sports",38:"mannequin",39:"bamboo,joint",40:"daughter,family",
+ 41:"son,family",42:"exhaust,smog",43:"korean,stew,spicy",44:"braille,blind",45:"food,meal",46:"computer,room",47:"smile,cheerful",48:"adventure,explorer",49:"pastor,church",50:"bank,transfer",
+ 51:"korea,folk,festival",52:"folk,song",53:"sewing,needle",54:"baduk,go,board",55:"audience,studio",56:"flea,market",57:"wall,hanging",58:"lunar,calendar",59:"full,moon",60:"herbal,medicine",
+ 61:"samgyetang,chicken,soup",62:"mansion,rich",63:"korean,cold,noodles",64:"gift,freebie",65:"photo,album",66:"korea,flag,independence",67:"pile,heap",68:"ginger,tea",69:"straight,hair",70:"blood,pressure",
+ 71:"hanbok,bow",72:"money,envelope",73:"small,theater",74:"pickpocket,crowd",75:"graduation,ceremony",76:"tailor,repair",77:"office,junior",78:"pet,dog",79:"nursing,home",80:"tv,drama",
+ 81:"couple,love",82:"library,reading",83:"old,dictionary",84:"hanok,ondol",85:"hot,spring,bath",86:"only,daughter",87:"only,son",88:"trophy,award",89:"water,well",90:"elder,respect",
+ 91:"yut,korean,game",92:"clothing,food,housing",93:"ent,doctor,clinic",94:"atm,machine",95:"groom,wedding",96:"eldest,son",97:"eldest,daughter",98:"funeral,hall",99:"server,room",100:"mother,family"
+};
+function wordImgURL(w){return `https://loremflickr.com/480/280/${encodeURIComponent(IMG_KW[w.id]||"korea")}?lock=${w.id}`;}
 
 /* ============================================================ ハングルIME（2ボル式 文字合成） ============================================================ */
 const CHO=["ㄱ","ㄲ","ㄴ","ㄷ","ㄸ","ㄹ","ㅁ","ㅂ","ㅃ","ㅅ","ㅆ","ㅇ","ㅈ","ㅉ","ㅊ","ㅋ","ㅌ","ㅍ","ㅎ"];
@@ -544,13 +561,7 @@ function scoreFor(type,isCorrect,t,isHint){
 function rankFor(s){if(s===100)return"S";if(s<=50)return"D";if(s<=70)return"C";if(s<=80)return"B";return"A";}
 
 /* ============================================================ 画面遷移 ============================================================ */
-function show(id){document.querySelectorAll(".screen").forEach(e=>e.classList.remove("on"));document.getElementById(id).classList.add("on");window.scrollTo(0,0);if(id==="s-home")updateHomeProgress();}
-
-/* ホーム：現在の周回・出題済み・残り */
-function updateHomeProgress(){
-  const p=loadProgress(),served=(p.served||[]).length,el=document.getElementById("homeprog");
-  if(el)el.innerHTML=`現在の周回 <b>${p.cycleNumber||1}</b>　出題済み：<b>${served}</b> / 100語　残り：<b>${100-served}</b>語`;
-}
+function show(id){document.querySelectorAll(".screen").forEach(e=>e.classList.remove("on"));document.getElementById(id).classList.add("on");window.scrollTo(0,0);}
 
 /* ============================================================ テスト進行 ============================================================ */
 let state=null,timer=null,qStart=0,answered=false;
@@ -591,7 +602,9 @@ function renderQuestion(){
   if(q.type==="kj"||q.type==="jk"){
     const display=q.type==="kj"?q.word.ko:q.word.ja;
     stage.innerHTML=`
-      <div class="qmain"><div class="qword">${esc(display)}</div></div>
+      <div class="qmain"><div class="qword">${esc(display)}</div>
+        <div class="qimg"><img src="${wordImgURL(q.word)}" alt="" onerror="this.parentElement.style.display='none'"></div>
+      </div>
       <div class="qbottom">
         <div class="choices">${q.choices.map(c=>`<button class="choice" data-v="${esc(c)}" onclick="pick(this.dataset.v)">${esc(c)}</button>`).join("")}</div>
         <button class="unknown" onclick="submit('unknown','')">わからない</button>
@@ -712,18 +725,16 @@ function keyboardHTML(){
     row.forEach(k=>h+=`<button class="key ex" data-k="${k}" onclick="kbKey('${k}')">${k}</button>`);
     h+='</div>';
   });
-  // Spaceがあった位置にBackspace(⌫)を配置。Clearと横並び
+  // 操作行：わからない(左) / 回答する(中央・大) / ⌫(右)。Clearは廃止
   h+=`<div class="krow ctrl">
-    <button class="key fn" onclick="kbClear()">Clear</button>
-    <button class="key fn wide" onclick="kbBack()">⌫</button>
-    <button class="key send" onclick="kbSend()">回答する</button>
     <button class="key dontknow" onclick="submit('unknown','')">わからない</button>
+    <button class="key send" onclick="kbSend()">回答する</button>
+    <button class="key fn" onclick="kbBack()">⌫</button>
   </div></div>`;
   return h;
 }
 function kbKey(base){IME.input(base);refreshInput();}
 function kbBack(){IME.backspace();refreshInput();}
-function kbClear(){IME.reset();refreshInput();}
 function kbSend(){
   const q=state.questions[state.idx];const ans=IME.text().trim();
   // Spaceキーを廃止したため、空白は無視して正誤判定（例「무통장 입금」）
@@ -936,10 +947,9 @@ function startReviewTest(ids){startTest(ids);}
 /* ============================================================ utils ============================================================ */
 function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
 /* バージョン表示（トップページ） */
-const APP_VERSION="v1.7.0 (2026-06-03)";
+const APP_VERSION="v1.8.0 (2026-06-03)";
 (function(){const el=document.getElementById("appver");if(el)el.textContent=APP_VERSION;})();
 getUserId();
-updateHomeProgress();
 </script>
 </body>
 </html>
