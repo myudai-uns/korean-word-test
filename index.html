@@ -886,7 +886,7 @@ function toggleAxisPeek(i){
   const pb2=document.querySelector("#s-type .page-body");if(pb2)pb2.scrollTop=st;
 }
 function togglePeek(code){
-  _typePeek=_typePeek===code?null:code;
+  _typePeek=code; // タップで切替（常にどれか1つを表示）
   const pb=document.querySelector("#s-type .page-body"),st=pb?pb.scrollTop:0; // スクロール位置を保持
   renderTypeDetail();
   const pb2=document.querySelector("#s-type .page-body");if(pb2)pb2.scrollTop=st;
@@ -894,30 +894,26 @@ function togglePeek(code){
 function renderTypeDetail(){
   const d=computeDiagnosis();
   const any=d.axes.some(a=>a.code);
+  const fullCode=d.complete?d.code:AXES.map((ax,i)=>d.axes[i].code||ax.R).join("");
+  if(!_typePeek)_typePeek=fullCode; // 標準では自分のタイプの説明を表示
   const bars=AXES.map((ax,i)=>{
     const a=d.axes[i],t=Math.round(a.score==null?50:a.score); // t=左寄り度(0-100)
     const domLeft=t>=50,col=AXIS_COLORS[domLeft?ax.L:ax.R];
     const pos=100-t; // 左寄りほど点が左へ
-    let row=`<div class="axrow" onclick="toggleAxisPeek(${i})"><span class="axl"${domLeft?` style="color:${col}"`:""}>${ax.ln} ${ax.L}</span>
+    return `<div class="axrow" onclick="toggleAxisPeek(${i})"><span class="axl"${domLeft?` style="color:${col}"`:""}>${ax.ln} ${ax.L}</span>
       <div class="axbar"><div class="axdot" style="left:calc(${pos}% - 9px);background:${col}"></div></div>
       <span class="axr"${!domLeft?` style="color:${col}"`:""}>${ax.R} ${ax.rn}</span></div>`;
-    if(_axisPeek===i)row+=`<div class="tpeek">${esc(ax.desc)}</div>`; // パラメータの説明
-    return row;
   }).join("");
-  // タイプの特徴文（未確定軸がある間は近いタイプとして表示）
-  const baseCode=d.code.replace(/\?/g,"");
-  const fullCode=d.complete?d.code:AXES.map((ax,i)=>d.axes[i].code||ax.L).join("");
-  const ti=TYPE_INFO[fullCode]||["",""];
-  const longTxt=d.complete?(TYPE_LONG[d.code]||ti[1])
-    :(any?`（仮判定）現時点では <b>${esc(fullCode)} ${esc(ti[0])}</b> に近い傾向です。<br>${esc(TYPE_LONG[fullCode]||"")}`
-         :"問題を解くと、あなたの学習傾向が分析されます。");
-  // 16タイプ一覧（現在のタイプを強調。タップでキャラクターと説明を展開）
+  // パラメータの説明は4軸ブロックの下部に統一表示
+  const axPeek=_axisPeek!=null?`<div class="tpeek axpeek">${esc(AXES[_axisPeek].desc)}</div>`:"";
+  // タイプ説明（選択中＝既定は自分）
+  const pk=_typePeek;
+  const peek=`<div class="tpeek" id="tpeek-main"><img src="characters/${pk.toLowerCase()}.svg" alt="">
+    <div><b>${pk} ${esc((TYPE_INFO[pk]||[""])[0])}</b><br>${esc(TYPE_LONG[pk]||"")}</div></div>`;
   const list=Object.entries(TYPE_INFO).map(([code,[name]])=>{
-    const cur=d.complete&&code===d.code,sel=_typePeek===code;
+    const cur=code===fullCode,sel=_typePeek===code;
     return `<div class="trow${cur?" cur":""}${sel?" sel":""}" onclick="togglePeek('${code}')"><span class="tcode">${code}</span><span>${esc(name)}</span></div>`;
   }).join("");
-  const peek=_typePeek?`<div class="tpeek"><img src="characters/${_typePeek.toLowerCase()}.svg" alt="">
-    <div><b>${_typePeek} ${esc((TYPE_INFO[_typePeek]||[""])[0])}</b><br>${esc(TYPE_LONG[_typePeek]||"")}</div></div>`:"";
   document.getElementById("s-type").innerHTML=`
    <div class="page">
     <div class="page-head"><button class="back" onclick="show('s-home')">‹</button><h2>タイプ詳細</h2></div>
@@ -927,12 +923,21 @@ function renderTypeDetail(){
         <div class="t-job">${any?esc((TYPE_INFO[fullCode]||[""])[0]):""}</div>
         <img class="t-char" src="${charPathFor(d)}" alt="">
       </div>
-      <div class="tdetail-sec" style="margin-top:24px">${bars}</div>
-      <div class="tdetail-sec"><div class="h">このタイプの特徴</div><div class="item">${longTxt}</div></div>
-      <div class="tdetail-sec"><div class="h">16タイプ一覧</div>${peek}<div class="tlist">${list}</div></div>
+      <div class="tdetail-sec" style="margin-top:24px">${bars}${axPeek}</div>
+      <div class="tdetail-sec">${peek}<div class="tlist">${list}</div></div>
     </div>
    </div>`;
   show("s-type");
+  // 白パネルの高さを最長の説明文に合わせて固定（タイプ切替で高さが変わらないように。表示後に計測）
+  const real=document.getElementById("tpeek-main");
+  if(real){
+    const longest=Object.entries(TYPE_LONG).sort((a,b)=>b[1].length-a[1].length)[0];
+    const probe=document.createElement("div");probe.className="tpeek";probe.style.visibility="hidden";
+    probe.innerHTML=`<img src="characters/${longest[0].toLowerCase()}.svg" alt=""><div><b>${longest[0]} ${esc((TYPE_INFO[longest[0]]||[""])[0])}</b><br>${esc(longest[1])}</div>`;
+    real.parentNode.insertBefore(probe,real.nextSibling);
+    real.style.minHeight=probe.offsetHeight+"px";
+    probe.remove();
+  }
 }
 
 /* ============================================================ ハングルIME（2ボル式 文字合成） ============================================================ */
@@ -1648,7 +1653,7 @@ function renderRoomCurve(){
 /* ============================================================ utils ============================================================ */
 function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
 /* バージョン表示（トップページ） */
-const APP_VERSION="v2.15.1 (2026-06-06)";
+const APP_VERSION="v2.16.0 (2026-06-06)";
 (function(){const el=document.getElementById("appver");if(el)el.textContent=APP_VERSION;})();
 getUserId();
 updateDiagnosis();   // 起動時に診断を初期化
