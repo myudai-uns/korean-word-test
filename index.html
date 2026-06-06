@@ -297,6 +297,7 @@ button{font-family:inherit}
 .bignote .improve{color:var(--green);font-weight:800}
 #s-wdetail .htab th,#s-wdetail .htab td{padding:6px 4px}
 #s-wdetail .htab td:first-child{font-size:11px;color:var(--faint)}
+.dicon{width:20px;height:20px;vertical-align:-4px;margin-right:2px}
 .wdetail-head{margin-bottom:6px}
 .wdetail-head .ko{font-size:26px;font-weight:800}
 .wdetail-head .ja{color:#FFFFFF;font-size:26px;font-weight:800;margin-top:2px}
@@ -1504,7 +1505,9 @@ function renderWordDetail(wordId,back){
   const dirJa={jp_to_kr:"日→韓",kr_to_jp:"韓→日"};
   const SYM={correct:["○","#FF3B3B"],incorrect:["×","#2F6FE0"],unknown:["－","rgba(255,255,255,.75)"],timeout:["△","#DFB10F"]};
   const rows=recs.map(r=>{
-    const dir=(r.answerType==="writing"?"✍":(r.direction==="kr_to_jp"?"🇰🇷":"🇯🇵"))+(r.isHintProvided?"💡":""); // 書き取りは旗なし
+    // EmojiOneのSVG（Windowsでも国旗が表示される）
+    const IC=c=>`<img class="dicon" src="emoji/${c}.svg" alt="">`;
+    const dir=(r.answerType==="writing"?IC("270d"):(r.direction==="kr_to_jp"?IC("1f1f0-1f1f7"):IC("1f1ef-1f1f5")))+(r.isHintProvided?IC("1f4a1"):"");
     const mem=(r.displayMemoryScoreAfterDecay!=null)?r.displayMemoryScoreAfterDecay+"%":"—";
     const sy=SYM[r.answerStatus]||["－",""];
     return `<tr><td>${fmtDate(r.answeredAt)}</td><td>${dir}</td><td style="color:${sy[1]};font-weight:900">${sy[0]}</td><td class="num">${(r.responseTimeMs/1000).toFixed(1)}</td><td class="num">${r.score}</td><td class="num">${mem}</td></tr>`;
@@ -1645,7 +1648,7 @@ function renderRoomCurve(){
 /* ============================================================ utils ============================================================ */
 function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
 /* バージョン表示（トップページ） */
-const APP_VERSION="v2.15.0 (2026-06-06)";
+const APP_VERSION="v2.15.1 (2026-06-06)";
 (function(){const el=document.getElementById("appver");if(el)el.textContent=APP_VERSION;})();
 getUserId();
 updateDiagnosis();   // 起動時に診断を初期化
