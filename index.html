@@ -32,11 +32,11 @@ button{font-family:inherit}
 .screen.on{display:flex}
 
 /* ===== top bar (quiz) ===== */
-.qbar{display:flex;align-items:center;justify-content:space-between;padding:14px 18px 0;font-size:13px;color:var(--mute);font-weight:700;gap:12px}
-.qhome{background:var(--gray);border:none;color:var(--text);width:32px;height:32px;font-size:16px;cursor:pointer;flex:0 0 auto}
-.qbar .prog{margin-right:auto}
-.qbar .prog{letter-spacing:.5px}
-.qbar .time{color:var(--mute);font-variant-numeric:tabular-nums}
+/* 問題番号・残り時間は白文字 */
+.qbar{display:flex;align-items:center;justify-content:space-between;padding:14px 18px 0;font-size:13px;color:#FFFFFF;font-weight:700;gap:12px}
+.qhome{background:rgba(0,0,0,.8);border:none;color:#fff;width:32px;height:32px;font-size:16px;cursor:pointer;flex:0 0 auto}
+.qbar .prog{margin-right:auto;letter-spacing:.5px}
+.qbar .time{color:#FFFFFF;font-variant-numeric:tabular-nums}
 .tbar{height:3px;margin:8px 18px 0;background:rgba(0,0,0,.35);border-radius:3px;overflow:hidden}
 .tfill{height:100%;width:100%;background:#00FF37;transition:width .1s linear} /* 制限時間バーは緑（ホームのトンマナ） */
 .tfill.warn{background:#FFC400}
@@ -52,17 +52,17 @@ button{font-family:inherit}
 
 /* choices */
 .choices{display:flex;flex-direction:column;gap:12px;margin-bottom:14px}
-.choice{background:var(--gray);border:none;border-radius:0;padding:18px;font-size:21px;font-weight:700;color:var(--text);
+.choice{background:rgba(0,0,0,.8);border:none;border-radius:0;padding:18px;font-size:21px;font-weight:700;color:#fff;
   text-align:center;cursor:pointer;transition:background .12s,transform .08s;min-height:60px}
-.choice:active{transform:scale(.98);background:var(--gray-h)}
+.choice:active{transform:scale(.98);background:rgba(0,0,0,.65)}
 /* 回答後のハイライト：正解=赤 / 選んだ誤答=青 / その他=暗い灰色のまま。色は20%薄く(不透明度.8)、視認性は維持 */
 .choice.correct{background:rgba(255,59,59,.8);color:#fff}
 .choice.wrong{background:rgba(47,139,255,.8);color:#fff}
 
 /* unknown btn */
-.unknown{display:block;margin:0 auto;background:var(--gray);border:1px solid var(--line);color:var(--text);
+.unknown{display:block;margin:0 auto;background:rgba(0,0,0,.8);border:none;color:#fff;
   font-size:13px;font-weight:600;padding:9px 22px;border-radius:0;cursor:pointer}
-.unknown:active{background:#141518}
+.unknown:active{background:rgba(0,0,0,.65)}
 
 /* ===== overlay symbol ===== */
 /* 横:中央 / 縦:中央から画面高の20%上へ / 大きさ1.3倍(46→60vw) / 線2倍(font-weight倍+text-stroke) / 透明度.6維持 */
@@ -147,8 +147,8 @@ button{font-family:inherit}
 .room-slide{position:relative;flex:0 0 602px;width:602px;height:1178px;scroll-snap-align:start}
 .slide-inner{position:absolute;left:0;top:255px;width:602px;height:686px}
 /* ROOMパラメータ（ラベル/番号・語数/バー/%の間に余白。ランクD,B=36px・A=98pxで下端揃え） */
-.hv-roomlabel{position:absolute;left:83px;top:0;font-size:36px;letter-spacing:2px;line-height:1;cursor:pointer}
-.hv-roomno{position:absolute;left:72px;top:42px;font-size:108px;line-height:1;cursor:pointer}
+.hv-roomlabel{position:absolute;left:83px;top:0;font-size:36px;letter-spacing:2px;line-height:1}
+.hv-roomno{position:absolute;left:72px;top:42px;font-size:108px;line-height:1}
 .hv-learned{position:absolute;left:244px;top:10px;font-size:40px;line-height:1}
 .hv-roompwr{position:absolute;left:244px;top:76px;font-size:48px;line-height:1}
 .hv-learned .unit{font-size:24px;margin-left:4px}
@@ -190,11 +190,6 @@ button{font-family:inherit}
 .type-upd b{color:var(--text)}
 .type-upd .btn{display:inline-block;width:auto;padding:5px 10px;font-size:11px;margin-left:8px}
 /* Section選択リスト */
-.seclist{display:flex;flex-direction:column;gap:8px}
-.secrow{display:flex;align-items:center;background:var(--gray);border:none;color:var(--text);font-size:15px;font-weight:700;padding:14px 16px;cursor:pointer;text-align:left}
-.secrow:active{background:var(--gray-h)}
-.secrow .seccnt{color:var(--faint);font-size:11px;margin-left:auto;margin-right:14px;font-weight:600}
-.secrow .secrank{width:30px;text-align:center;font-size:18px;font-weight:900;color:var(--mute)}
 .btn{display:block;width:100%;border:none;border-radius:0;padding:17px;font-size:17px;font-weight:800;cursor:pointer;transition:transform .08s;color:var(--text)}
 .btn:active{transform:translateY(1px)}
 .btn.primary{background:var(--gray-h);color:var(--text);border:1px solid var(--line)}
@@ -287,20 +282,6 @@ button{font-family:inherit}
       <div class="hv-ver" id="appver"></div>
     </div>
   </div>
-
-  <!-- LEVEL SELECT -->
-  <div class="screen" id="s-level">
-    <div class="home">
-      <h1>難易度を選択</h1>
-      <button class="btn primary" onclick="renderSectionSelect('beginner')">初級</button>
-      <button class="btn primary" onclick="renderSectionSelect('middle')">中級</button>
-      <button class="btn ghost" onclick="levelNA('上級')">上級</button>
-      <div class="sub" id="level-note" style="min-height:20px;margin:6px 0 0"></div>
-      <button class="btn line" onclick="show('s-home')">ホームに戻る</button>
-    </div>
-  </div>
-  <!-- SECTION SELECT (中級) -->
-  <div class="screen" id="s-section"></div>
 
   <!-- QUIZ -->
   <div class="screen" id="s-quiz">
@@ -557,8 +538,8 @@ function buildRoomSlides(){
     const best=ri.best?circ("rank-b",ri.best):`<div class="rank-b" style="background:rgba(0,0,0,.22)">-</div>`;
     return `<div class="room-slide" data-n="${n}" style="background:${roomBg(n)}">
       <div class="slide-inner">
-      <div class="hv-roomlabel" onclick="renderSectionSelect(curLevel)">ROOM</div>
-      <div class="hv-roomno" onclick="renderSectionSelect(curLevel)">${nn}</div>
+      <div class="hv-roomlabel">ROOM</div>
+      <div class="hv-roomno">${nn}</div>
       <div class="hv-learned">${ri.learned}<span class="unit">語</span></div>
       <div class="gauge hv-wordsg"><div class="gfill" style="background:#00FFFF;width:${Math.round(ri.learned/ri.total*100)}%"></div></div>
       <div class="hv-roompwr">${ri.pwr}<span class="unit">%</span></div>
@@ -1545,34 +1526,10 @@ function curveForecast(now){
 }
 function startReviewTest(ids){curLevel="middle";curSection=1;startTest(ids);} // 復習予報は中級Section01(基本100語)ベース
 
-/* ============================================================ 難易度・Section選択画面 ============================================================ */
-function levelNA(name){
-  const el=document.getElementById("level-note");
-  if(el){el.textContent=name+"は準備中です";setTimeout(()=>{if(el.textContent===name+"は準備中です")el.textContent="";},2000);}
-}
-function renderSectionSelect(level){
-  if(level)curLevel=level;
-  const info=LEVEL_INFO[curLevel];
-  const rows=Array.from({length:info.count},(_,i)=>{
-    const n=i+1,rec=getSectionRec(n),rank=rec.bestRank;
-    return `<button class="secrow" onclick="startSectionTest(${n})">
-      <span>Section ${String(n).padStart(2,"0")}</span>
-      <span class="seccnt">${(LEVEL_SECTIONS[curLevel][n]||[]).length}語</span>
-      <span class="secrank ${rank?("rank-"+rank):""}">${rank||"-"}</span></button>`;
-  }).join("");
-  document.getElementById("s-section").innerHTML=`
-   <div class="page">
-    <div class="page-head"><button class="back" onclick="show('s-level')">‹</button><h2>${info.label} Section選択</h2></div>
-    <div class="page-body"><div class="seclist">${rows}</div></div>
-   </div>`;
-  show("s-section");
-}
-function startSectionTest(n){curSection=n;show("s-home");} // ROOM切替：ホームに戻り表示を更新（テスト開始はスタートボタン）
-
 /* ============================================================ utils ============================================================ */
 function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
 /* バージョン表示（トップページ） */
-const APP_VERSION="v2.8.0 (2026-06-06)";
+const APP_VERSION="v2.9.0 (2026-06-06)";
 (function(){const el=document.getElementById("appver");if(el)el.textContent=APP_VERSION;})();
 getUserId();
 updateDiagnosis();   // 起動時に診断を初期化
