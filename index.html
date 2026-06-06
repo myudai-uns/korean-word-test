@@ -173,6 +173,15 @@ button{font-family:inherit}
 .lvbtn.on{box-shadow:0 0 0 4px #fff inset}
 .lv-pick .lv-cap{text-align:center;font-size:22px;color:rgba(255,255,255,.85);letter-spacing:2px}
 .slide-img{position:absolute;left:24px;top:178px;width:554px;height:507px;object-fit:contain}
+/* 単語一覧モード：ROOMメニューが上へスライドし、下に一覧 */
+.room-scroll .slide-inner{transition:transform .35s ease}
+.room-scroll.listmode .slide-inner{transform:translateY(-62px)}
+.slide-list{position:absolute;left:24px;top:178px;width:554px;height:566px;overflow-y:auto;background:rgba(0,0,0,.55);scrollbar-width:none}
+.slide-list::-webkit-scrollbar{display:none}
+.wl-row{display:flex;align-items:baseline;gap:10px;padding:9px 12px;border-bottom:1px solid rgba(255,255,255,.12);cursor:pointer}
+.wl-ko{font-size:19px;font-weight:800;flex:0 0 auto}
+.wl-ja{flex:1;font-size:14px;font-weight:700;color:rgba(255,255,255,.85);text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wl-rate{flex:0 0 52px;text-align:right;font-size:15px;font-weight:900}
 .room-ph{position:absolute;left:24px;top:178px;width:554px;height:507px;display:flex;align-items:center;justify-content:center;font-size:130px;color:rgba(255,255,255,.32);font-weight:800}
 .start-button{position:absolute;left:50%;transform:translateX(-50%);top:1004px;width:540px;height:123px;border:4px solid #FFC400;border-radius:62px;
   background:rgba(0,0,0,.8);color:#FFFFFF;font-size:62px;font-weight:900;cursor:pointer;font-family:inherit;z-index:2;
@@ -360,8 +369,6 @@ button{font-family:inherit}
   <div class="screen" id="s-curve"></div>
   <!-- TYPE DETAIL -->
   <div class="screen" id="s-type"></div>
-  <!-- ROOM MENU（単語一覧・学習履歴） -->
-  <div class="screen" id="s-roommenu"></div>
 </div>
 
 <script src="words-middle.js"></script>
@@ -572,8 +579,31 @@ function applyBgAll(bg){
 function applyHomeBg(){applyBgAll(roomBg(curSection));}
 
 /* ROOM選択：番号・パラメータ・ジオラマを1スライドにまとめ、丸ごと左右スワイプ */
-let _roomScrollT=null,_panelFor=null;
+let _roomScrollT=null,_panelFor=null,_listMode=false;
 function toggleRoomPanel(n){_panelFor=_panelFor===n?null:n;buildRoomSlides();}
+/* 単語一覧モード：ROOMメニューが上へスライドし、下に単語一覧。横スワイプで隣のROOMの一覧へ */
+function enterListMode(){
+  _listMode=true;_panelFor=null;buildRoomSlides();
+  requestAnimationFrame(()=>{const el=document.getElementById("hv-rooms");if(el)el.classList.add("listmode");});
+}
+function exitListMode(){
+  const el=document.getElementById("hv-rooms");if(el)el.classList.remove("listmode");
+  setTimeout(()=>{_listMode=false;buildRoomSlides();},360);
+}
+function roomMenuTap(n){if(_listMode)exitListMode();else toggleRoomPanel(n);}
+/* スライド内の単語一覧 */
+function roomListHTML(n){
+  const ids=LEVEL_SECTIONS[curLevel][n]||[],st=loadStats(),now=Date.now();
+  const rows=ids.map(id=>{
+    const w=WORD_BY_ID[id],x=st[id];
+    if(x&&x.reviewCount>0){
+      const rate=Math.round(displayScore(getStat(id,st),now)),ms=memState(rate);
+      return `<div class="wl-row" onclick="renderWordDetail(${id},'room')"><span class="wl-ko">${esc(w.ko)}</span><span class="wl-ja">${esc(w.ja)}</span><span class="wl-rate ${ms.cls}">${rate}%</span></div>`;
+    }
+    return `<div class="wl-row" style="opacity:.5"><span class="wl-ko">${esc(w.ko)}</span><span class="wl-ja">${esc(w.ja)}</span><span class="wl-rate">未</span></div>`;
+  }).join("");
+  return `<div class="slide-list">${rows}</div>`;
+}
 /* ROOMボード：ROOMメニュータップでジオラマと入れ替わる領域。
    左=テスト履歴(大きめ表示・最大8件) / 右=単語帳プレビュー(タップで一覧へ)・ROOM PWRメータ */
 function roomPanelHTML(n){
@@ -593,7 +623,7 @@ function roomPanelHTML(n){
   return `<div class="room-panel">
     <div class="rp-left">${rowsH}</div>
     <div class="rp-right">
-      <button class="rp-preview" onclick="renderRoomMenu()">${pv}<div class="pv-more">単語一覧 ›</div></button>
+      <button class="rp-preview" onclick="enterListMode()">${pv}<div class="pv-more">単語一覧 ›</div></button>
       <button class="rp-btn" onclick="renderRoomCurve()">PWRメータ</button>
     </div>
   </div>`;
@@ -630,9 +660,9 @@ function buildRoomSlides(){
     const big=rLast?circ("rank-b",rLast):`<div class="rank-b" style="background:rgba(0,0,0,.22)">-</div>`;
     return `<div class="room-slide" data-n="${n}" style="background:${roomBg(n)}">
       <div class="slide-inner">
-      <div class="rmenu-bg" onclick="toggleRoomPanel(${n})"></div>
-      <div class="hv-roomlabel" onclick="toggleRoomPanel(${n})">ROOM</div>
-      <div class="hv-roomno" onclick="toggleRoomPanel(${n})">${nn}</div>
+      <div class="rmenu-bg" onclick="roomMenuTap(${n})"></div>
+      <div class="hv-roomlabel" onclick="roomMenuTap(${n})">ROOM</div>
+      <div class="hv-roomno" onclick="roomMenuTap(${n})">${nn}</div>
       <div class="hv-learned">${ri.learned}<span class="unit">語</span></div>
       <div class="gauge hv-wordsg"><div class="gfill" style="background:#00FFFF;width:${Math.round(ri.learned/ri.total*100)}%"></div></div>
       <div class="hv-roompwr">${ri.pwr}<span class="unit">%</span></div>
@@ -640,14 +670,16 @@ function buildRoomSlides(){
       ${rPrev2?circ("rank-s",rPrev2):""}
       ${rPrev1?circ("rank-s rank-s1",rPrev1):""}
       ${big}
-      <div class="room-ph">${nn}</div>
+      ${_listMode?roomListHTML(n):`<div class="room-ph">${nn}</div>
       <img class="slide-img" src="rooms/${curLevel}-${nn}.webp" alt="" loading="lazy"
         onload="this.previousElementSibling.style.display='none'"
         onerror="this.style.display='none'">
-      ${_panelFor===n?roomPanelHTML(n):""}
+      ${_panelFor===n?roomPanelHTML(n):""}`}
       </div>
     </div>`;
   }).join("");
+  el.classList.toggle("listmode",_listMode&&el.classList.contains("listmode"));
+  if(_listMode&&!el.classList.contains("listmode")&&el.dataset.bound)el.classList.add("listmode");
   if(!el.dataset.bound){
     el.dataset.bound="1";
     el.addEventListener("scroll",()=>{
@@ -1545,7 +1577,7 @@ function renderWordDetail(wordId,back){
   const rate=Math.round(displayScore(getStat(wordId),Date.now())),ms=memState(rate);
   document.getElementById("s-wdetail").innerHTML=`
    <div class="page">
-    <div class="page-head"><button class="back" onclick="${back==='room'?"renderRoomMenu()":"renderCurve()"}">‹</button><h2>単語詳細</h2></div>
+    <div class="page-head"><button class="back" onclick="${back==='room'?"show('s-home')":"renderCurve()"}">‹</button><h2>単語詳細</h2></div>
     <div class="wdetail-head"><div class="wd-line"><div class="ko">${esc(w.ko)}</div><div class="ja">${esc(w.ja)}</div></div>
       <div style="margin-top:6px;font-size:13px;font-weight:800;display:flex;gap:16px;align-items:center;flex-wrap:wrap">推定記憶率 <span class="${ms.cls}">${rate}%・${ms.label}</span><span>${esc(w.cat)}</span></div></div>
     ${note}
@@ -1673,29 +1705,6 @@ function renderPastResult(testId){
   show("s-result");
 }
 
-/* ============================================================ 単語一覧ページ（シンプル版） ============================================================ */
-function renderRoomMenu(){
-  const ids=sectionIds(),st=loadStats(),now=Date.now(),nn=String(curSection).padStart(2,"0");
-  const rows=ids.map(id=>{
-    const w=WORD_BY_ID[id],x=st[id];
-    if(x&&x.reviewCount>0){
-      const rate=Math.round(displayScore(getStat(id,st),now)),ms=memState(rate);
-      return `<tr class="click" onclick="renderWordDetail(${id},'room')">
-        <td class="ko" style="font-weight:700">${esc(w.ko)}</td><td style="color:var(--mute)">${esc(w.ja)}</td>
-        <td class="num">${x.reviewCount}</td><td class="num ${ms.cls}">${rate}%</td></tr>`;
-    }
-    return `<tr style="opacity:.5"><td class="ko" style="font-weight:700">${esc(w.ko)}</td><td style="color:var(--mute)">${esc(w.ja)}</td><td class="num">—</td><td class="num">未</td></tr>`;
-  }).join("");
-  document.getElementById("s-roommenu").innerHTML=`
-   <div class="page">
-    <div class="page-head"><button class="back" onclick="show('s-home')">‹</button><h2>ROOM ${nn} 単語一覧</h2></div>
-    <div class="page-body">
-      <table class="htab"><thead><tr><th>韓国語</th><th>日本語</th><th class="num">回数</th><th class="num">記憶率</th></tr></thead><tbody>${rows}</tbody></table>
-    </div>
-   </div>`;
-  show("s-roommenu");
-}
-
 /* ============================================================ ROOM限定のPWRメータページ ============================================================ */
 function renderRoomCurve(){
   _roomCurveMode=true; // ROOM別PWR=そのROOMの色背景
@@ -1718,7 +1727,7 @@ function renderRoomCurve(){
 /* ============================================================ utils ============================================================ */
 function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
 /* バージョン表示（トップページ） */
-const APP_VERSION="v2.16.17 (2026-06-06)";
+const APP_VERSION="v2.17.0 (2026-06-06)";
 (function(){const el=document.getElementById("appver");if(el)el.textContent=APP_VERSION;})();
 getUserId();
 updateDiagnosis();   // 起動時に診断を初期化
