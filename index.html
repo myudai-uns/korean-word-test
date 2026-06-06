@@ -727,19 +727,20 @@ function computeDiagnosis(){
     num+=(Math.max(...Object.values(cnt))/arr.length)*ws;den+=ws;
   });
   const s1=den?num/den*100:null;
-  const axis1={no:1,score:s1,code:s1!=null?(s1>=60?"F":"U"):null,n:n1,need:Math.max(0,3-n1),provisional:n1<3}; // 少データでも仮判定で更新
+  const hasData=win.length>0; // 履歴が1件でもあれば未確定軸は右側(U/C/S/D)を既定として必ず4文字を確定
+  const axis1={no:1,score:s1,code:s1!=null?(s1>=60?"F":"U"):(hasData?"U":null),n:n1,need:Math.max(0,3-n1),provisional:n1<3};
   // 軸2: 意味類似誤答率（10件未満は仮判定）
   let sem=0,ctx=0,n2=0;
   wrongs.forEach(x=>{const t=x.r.distractorType;if(!t)return;
     if(t==="semantic_close"){sem+=x.w;n2++;}else if(CTX.includes(t)){ctx+=x.w;n2++;}});
   const s2=(sem+ctx)>0?sem/(sem+ctx)*100:null;
-  const axis2={no:2,score:s2,code:s2!=null?(s2>=55?"M":"C"):null,n:n2,need:Math.max(0,10-n2),provisional:n2<10};
+  const axis2={no:2,score:s2,code:s2!=null?(s2>=55?"M":"C"):(hasData?"C":null),n:n2,need:Math.max(0,10-n2),provisional:n2<10};
   // 軸3: 音写率（分類可能誤答5件未満は分析中）
   let ph=0,ss=0,n3=0;
   win.forEach(x=>{const t=x.r.writingErrorType;
     if(t==="phonetic_spelling"){ph+=x.w;n3++;}else if(t==="semantic_substitution"){ss+=x.w;n3++;}});
   const s3=(ph+ss)>0?ph/(ph+ss)*100:null;
-  const axis3={no:3,score:s3,code:s3!=null?(s3>=55?"P":"S"):null,n:n3,need:Math.max(0,5-n3),provisional:n3<5}; // 少データでも仮判定で更新
+  const axis3={no:3,score:s3,code:s3!=null?(s3>=55?"P":"S"):(hasData?"S":null),n:n3,need:Math.max(0,5-n3),provisional:n3<5};
   // 軸4: 瞬発誤答 vs 熟考正答（四択のみ、わからない/時間切れ除外、20件未満は仮判定）
   const elig=win.filter(x=>x.r.answerType==="choice"&&(x.r.answerStatus==="correct"||x.r.answerStatus==="incorrect"));
   let qw=0,dc=0,tw=0;
@@ -747,7 +748,7 @@ function computeDiagnosis(){
     if(!x.r.isCorrect&&x.r.responseTimeMs<3000)qw+=x.w;
     else if(x.r.isCorrect&&x.r.responseTimeMs>=3000)dc+=x.w;});
   const s4=(qw+dc)>0?qw/(qw+dc)*100:null;
-  const axis4={no:4,score:s4,code:elig.length?((tw?qw/tw:0)>(tw?dc/tw:0)?"Q":"D"):null,n:elig.length,need:Math.max(0,20-elig.length),provisional:elig.length<20};
+  const axis4={no:4,score:s4,code:elig.length?((tw?qw/tw:0)>(tw?dc/tw:0)?"Q":"D"):(hasData?"D":null),n:elig.length,need:Math.max(0,20-elig.length),provisional:elig.length<20};
   const n=win.length;
   const confidence=n<30?"analyzing":n<100?"provisional":n<300?"current":"detailed";
   const axes=[axis1,axis2,axis3,axis4];
@@ -1598,7 +1599,7 @@ function renderRoomMenu(){
 /* ============================================================ utils ============================================================ */
 function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
 /* バージョン表示（トップページ） */
-const APP_VERSION="v2.11.0 (2026-06-06)";
+const APP_VERSION="v2.11.1 (2026-06-06)";
 (function(){const el=document.getElementById("appver");if(el)el.textContent=APP_VERSION;})();
 getUserId();
 updateDiagnosis();   // 起動時に診断を初期化
