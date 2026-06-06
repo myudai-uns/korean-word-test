@@ -1593,7 +1593,7 @@ function renderRoomMenu(){
         <td class="ko" style="font-weight:700">${esc(w.ko)}</td><td style="color:var(--mute)">${esc(w.ja)}</td>
         <td class="num">${st.reviewCount}</td><td class="num ${ms.cls}">${rate}%</td></tr>`;
     }
-    return `<tr style="opacity:.5"><td class="ko" style="font-weight:700">${esc(w.ko)}</td><td style="color:var(--mute)">${esc(w.ja)}</td><td class="num">—</td><td class="num">未学習</td></tr>`;
+    return `<tr style="opacity:.5"><td class="ko" style="font-weight:700">${esc(w.ko)}</td><td style="color:var(--mute)">${esc(w.ja)}</td><td class="num">—</td><td class="num">未</td></tr>`;
   }).join("");
   document.getElementById("s-roommenu").innerHTML=`
    <div class="page">
@@ -1608,7 +1608,7 @@ function renderRoomMenu(){
 /* ============================================================ utils ============================================================ */
 function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
 /* バージョン表示（トップページ） */
-const APP_VERSION="v2.13.1 (2026-06-06)";
+const APP_VERSION="v2.13.2 (2026-06-06)";
 (function(){const el=document.getElementById("appver");if(el)el.textContent=APP_VERSION;})();
 getUserId();
 updateDiagnosis();   // 起動時に診断を初期化
