@@ -25,7 +25,9 @@ button{font-family:inherit}
 .screen.on{display:flex}
 
 /* ===== top bar (quiz) ===== */
-.qbar{display:flex;align-items:center;justify-content:space-between;padding:14px 18px 0;font-size:13px;color:var(--mute);font-weight:700}
+.qbar{display:flex;align-items:center;justify-content:space-between;padding:14px 18px 0;font-size:13px;color:var(--mute);font-weight:700;gap:12px}
+.qhome{background:var(--gray);border:none;color:var(--text);width:32px;height:32px;font-size:16px;cursor:pointer;flex:0 0 auto}
+.qbar .prog{margin-right:auto}
 .qbar .prog{letter-spacing:.5px}
 .qbar .time{color:var(--mute);font-variant-numeric:tabular-nums}
 .tbar{height:3px;margin:8px 18px 0;background:var(--gray);border-radius:3px;overflow:hidden}
@@ -112,17 +114,7 @@ button{font-family:inherit}
 .typebox{text-align:center;cursor:pointer;padding:2px 0}
 .t-code{font-size:42px;font-weight:900;letter-spacing:9px;text-indent:9px}
 .t-char{display:block;margin:14px auto 0;width:116px;height:116px}
-/* 4軸タイプカラー外枠：9px・四隅45°接続・角丸でスマホの縁を象る。
-   端末の丸角/ノッチ/ホームバーで見切れないよう全辺5px＋セーフエリア分を内側に確保（top/bottom指定でdvh非依存） */
-.tframe{position:fixed;
-  top:calc(5px + env(safe-area-inset-top,0px));
-  bottom:calc(5px + env(safe-area-inset-bottom,0px));
-  left:calc(5px + env(safe-area-inset-left,0px));
-  right:calc(5px + env(safe-area-inset-right,0px));
-  max-width:510px;margin:0 auto;
-  pointer-events:none;z-index:250;box-sizing:border-box;
-  border:9px solid #26282d;border-radius:26px;
-  transition:border-top-color .6s ease,border-right-color .6s ease,border-bottom-color .6s ease,border-left-color .6s ease}
+/* 外枠は廃止（タイプカラーは4軸バー等で使用。applyFrameColorsは要素なしのため何もしない） */
 /* タイプ詳細 */
 .axrow{display:flex;align-items:center;gap:8px;margin:10px 0;font-size:11px;font-weight:700;color:var(--mute)}
 .axrow .axl,.axrow .axr{flex:0 0 84px}
@@ -246,7 +238,7 @@ button{font-family:inherit}
 
   <!-- QUIZ -->
   <div class="screen" id="s-quiz">
-    <div class="qbar"><span class="prog" id="prog">1 / 12</span><span class="time" id="time">10.0</span></div>
+    <div class="qbar"><button class="qhome" onclick="quitTest()">‹</button><span class="prog" id="prog">1 / 12</span><span class="time" id="time">10.0</span></div>
     <div class="tbar"><div class="tfill" id="tfill"></div></div>
     <div class="qstage" id="qstage"></div>
   </div>
@@ -262,9 +254,6 @@ button{font-family:inherit}
   <!-- TYPE DETAIL -->
   <div class="screen" id="s-type"></div>
 </div>
-
-<!-- 4軸タイプカラー外枠（上=軸1/右=軸2/下=軸3/左=軸4。border方式＝四隅45°接続＋スマホ風の角丸） -->
-<div class="tframe" id="tframe" aria-hidden="true"></div>
 
 <script src="words-middle.js"></script>
 <script src="words-beginner.js"></script>
@@ -957,7 +946,15 @@ function rankFor(s){if(s===100)return"S";if(s<=50)return"D";if(s<=70)return"C";i
 function show(id){document.querySelectorAll(".screen").forEach(e=>e.classList.remove("on"));document.getElementById(id).classList.add("on");window.scrollTo(0,0);if(id==="s-home"){refreshHomeType();refreshHomeStats();}}
 
 /* ============================================================ テスト進行 ============================================================ */
-let state=null,timer=null,qStart=0,answered=false;
+let state=null,timer=null,qStart=0,answered=false,ovTimer=null;
+
+/* 出題中にホームへ戻る（タイマー・音声・○×表示を止めて中断） */
+function quitTest(){
+  clearInterval(timer);clearTimeout(ovTimer);
+  document.querySelectorAll(".overlay").forEach(e=>e.remove());
+  stopSpeak();answered=true;
+  show("s-home");
+}
 
 function startTest(reviewIds){
   const now=Date.now();
@@ -1081,7 +1078,7 @@ function showOverlay(status,q,userAnswer){
   }
   ov.innerHTML=inner;
   document.body.appendChild(ov);
-  setTimeout(()=>{ov.remove();afterAnswer();},isCorrect?1000:2000);
+  ovTimer=setTimeout(()=>{ov.remove();afterAnswer();},isCorrect?1000:2000);
 }
 /* 四択：正解の選択肢を赤、ユーザーが選んだ誤答を青で強調。その他は暗い灰色のまま */
 function highlightChoices(q,status,userAnswer){
@@ -1380,7 +1377,7 @@ function startSectionTest(n){curSection=n;startTest();}
 /* ============================================================ utils ============================================================ */
 function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
 /* バージョン表示（トップページ） */
-const APP_VERSION="v2.1.1 (2026-06-06)";
+const APP_VERSION="v2.2.0 (2026-06-06)";
 (function(){const el=document.getElementById("appver");if(el)el.textContent=APP_VERSION;})();
 getUserId();
 updateDiagnosis();   // 起動時に診断・外枠色・ホーム表示を初期化
