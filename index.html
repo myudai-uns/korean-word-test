@@ -213,17 +213,24 @@ button{font-family:inherit}
 /* ===== result (fixed, only list scrolls) ===== */
 .res{height:100dvh;display:flex;flex-direction:column;padding:18px 18px calc(14px + env(safe-area-inset-bottom))}
 .res-head{flex:0 0 auto;text-align:center}
-.res-label{color:var(--mute);font-size:12px;letter-spacing:3px;font-weight:800}
-.res-rank{font-size:74px;font-weight:900;line-height:1.05;margin:2px 0}
-.rank-S{color:var(--gold)}.rank-A{color:var(--green)}.rank-B{color:var(--blue)}.rank-C{color:var(--text)}.rank-D{color:var(--mute)}
-.res-score{font-size:24px;font-weight:800}
-.res-stats{display:flex;justify-content:center;gap:18px;margin-top:8px;color:var(--mute);font-size:13px;font-weight:700;flex-wrap:wrap}
-.res-stats b{color:var(--text);font-weight:800}
+.res-top{display:flex;align-items:center;justify-content:center;gap:18px}
+.rank-c{width:78px;height:78px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:54px;font-weight:900;color:#fff}
+.res-score{font-size:36px;font-weight:900}
+.res-score span{font-size:16px;color:var(--faint);font-weight:800}
+.res-params{display:flex;justify-content:center;gap:28px;margin-top:10px}
+.rp{display:flex;flex-direction:column;align-items:center;gap:4px}
+.rp-num{font-size:22px;font-weight:800;line-height:1}
+.rp-num i{font-style:normal;font-size:13px;margin-left:2px}
+.rp-g{width:120px;height:15px;background:#333;border-radius:999px;padding:3px;box-sizing:border-box}
+.rp-g div{height:100%;border-radius:999px}
+.res-counts{display:flex;justify-content:center;gap:24px;margin-top:9px;font-size:18px;font-weight:900}
+.btn.dark{background:rgba(0,0,0,.8);color:#fff}
+.btn.dark:active{background:rgba(0,0,0,.65)}
 .res-listwrap{flex:1 1 auto;min-height:0;overflow-y:auto;margin:14px 0;border:1px solid var(--line);border-radius:12px;-webkit-overflow-scrolling:touch}
 .rtab{width:100%;border-collapse:collapse;font-size:15px;background:rgba(0,0,0,.1)}
 .rtab th,.rtab td{padding:8px 6px;border-bottom:1px solid var(--line);text-align:left}
 .rtab th{position:sticky;top:0;background:rgba(0,0,0,.8);color:#fff;font-size:12px;font-weight:800;z-index:1;white-space:nowrap}
-.rtab td:nth-child(3){font-size:16px}
+.rtab td:nth-child(3){font-size:16px;font-weight:700}
 .rtab td.no{color:var(--mute);text-align:right;width:34px}
 .rtab td.ko{font-weight:700;font-size:18px}
 .rtab .r-ok{color:var(--green)}.rtab .r-ng{color:var(--blue)}.rtab .r-un{color:var(--mute)}.rtab .r-to{color:var(--gold)}
@@ -242,7 +249,7 @@ button{font-family:inherit}
 .htab th,.htab td{padding:8px 6px;border-bottom:1px solid var(--line);text-align:left}
 .htab th{position:sticky;top:0;background:rgba(0,0,0,.8);color:#fff;font-size:12px;font-weight:800;white-space:nowrap}
 .htab td.ko{font-size:18px}
-.htab td:nth-child(2){font-size:16px}
+.htab td:nth-child(2){font-size:16px;font-weight:700}
 .htab td.num{text-align:right;font-variant-numeric:tabular-nums}
 .htab tr.click{cursor:pointer}
 .htab tr.click:active{background:var(--panel)}
@@ -309,8 +316,6 @@ button{font-family:inherit}
 
   <!-- RESULT -->
   <div class="screen" id="s-result"></div>
-  <!-- HISTORY -->
-  <div class="screen" id="s-history"></div>
   <!-- WORD DETAIL -->
   <div class="screen" id="s-wdetail"></div>
   <!-- CURVE -->
@@ -1411,27 +1416,33 @@ function finishTest(){
   const dg=updateDiagnosis();
   const typeUpd=(dg.changed&&dg.prevCode&&dg.prevCode!==dg.diag.code)
     ?`<div class="type-upd">WORD TYPE UPDATED　<b>${esc(dg.prevCode)} → ${esc(dg.diag.code)}</b><button class="btn line" onclick="show('s-home')">ホームで確認する</button></div>`:"";
+  const SYM={correct:["○","#1FAD62"],incorrect:["×","#2F6FE0"],unknown:["－","rgba(255,255,255,.75)"],timeout:["△","#DFB10F"]};
   const rows=R.map(r=>{
-    const m={correct:["正解","r-ok"],incorrect:["不正解","r-ng"],unknown:["わからない","r-un"],timeout:["時間切れ","r-to"]}[r.answerStatus];
+    const sy=SYM[r.answerStatus]||["－",""];
     const hb=r.isHintProvided?'<span class="hint-badge">ヒント</span>':'';
-    return `<tr><td class="no">${r.questionNumber}</td><td class="ko">${esc(r.korean)}</td><td>${esc(r.japanese)}</td><td class="${m[1]}">${m[0]}${hb}</td></tr>`;
+    return `<tr><td class="no">${r.questionNumber}</td><td class="ko">${esc(r.korean)}</td><td>${esc(r.japanese)}</td><td style="color:${sy[1]};font-weight:900">${sy[0]}${hb}</td></tr>`;
   }).join("");
+  const ri=roomInfoFor(curSection); // テスト反映後のROOMパラメータ
   document.getElementById("s-result").innerHTML=`
    <div class="res">
     <div class="res-head">
-      <div class="res-label">RESULT</div>
-      <div class="res-rank rank-${rank}">${rank}</div>
-      <div class="res-score">${totalDisp} / 100</div>
-      <div class="res-stats"><span>正解 <b>${nCorrect}</b></span><span>不正解 <b>${nWrong}</b></span><span>満点達成 <b>${perfect}</b></span></div>
+      <div class="res-top">
+        <div class="rank-c" style="background:${RANK_COLORS[rank]||"#555"}">${rank}</div>
+        <div class="res-score">${totalDisp}<span> / 100</span></div>
+      </div>
+      <div class="res-params">
+        <div class="rp"><span class="rp-num">${ri.learned}<i>語</i></span><div class="rp-g"><div style="background:#00FFFF;width:${Math.round(ri.learned/ri.total*100)}%"></div></div></div>
+        <div class="rp"><span class="rp-num">${ri.pwr}<i>%</i></span><div class="rp-g"><div style="background:#00FF37;width:${ri.pwr}%"></div></div></div>
+      </div>
+      <div class="res-counts"><span style="color:#1FAD62">○ ${nCorrect}</span><span style="color:#2F6FE0">× ${nWrong}</span></div>
     </div>
     <div class="res-listwrap">
       <table class="rtab"><thead><tr><th class="no">No.</th><th>韓国語</th><th>日本語</th><th>結果</th></tr></thead>
       <tbody>${rows}</tbody></table>
     </div>
     <div class="res-btns">
-      <button class="btn primary full" onclick="startTest()">もう一度挑戦する</button>
-      <button class="btn ghost" onclick="renderHistory()">学習履歴を見る</button>
-      <button class="btn ghost" onclick="renderCurve()">忘却曲線を見る</button>
+      <button class="btn dark" onclick="startTest()">もう一度挑戦する</button>
+      <button class="btn dark" onclick="renderCurve()">忘却曲線を見る</button>
       <button class="btn line full" onclick="show('s-home')">ホームに戻る</button>
     </div>
     ${typeUpd}
@@ -1439,44 +1450,10 @@ function finishTest(){
   show("s-result");
 }
 
-/* ============================================================ 学習履歴 ============================================================ */
-function aggregateByWord(){
-  const h=loadHistory(),map={};
-  h.forEach(r=>{
-    if(!map[r.wordId])map[r.wordId]={wordId:r.wordId,ko:r.korean,ja:r.japanese,count:0,correct:0,last:null,recs:[]};
-    const m=map[r.wordId];m.count++;if(r.isCorrect)m.correct++;m.recs.push(r);
-    if(!m.last||r.answeredAt>m.last.answeredAt)m.last=r;
-  });
-  return Object.values(map).sort((a,b)=>(b.last?.answeredAt||"").localeCompare(a.last?.answeredAt||""));
-}
+/* 学習履歴ページは廃止（単語の履歴はROOMメニュー→単語詳細で確認） */
 const STATUS_JA={correct:"正解",incorrect:"不正解",unknown:"わからない",timeout:"時間切れ"};
 function fmtDate(iso){const d=new Date(iso);const p=n=>String(n).padStart(2,"0");return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;}
 function rateClass(r){return r<0.5?"rate-bad":r<0.8?"rate-mid":"rate-good";}
-
-function renderHistory(){
-  const list=aggregateByWord();
-  let body;
-  if(list.length===0){
-    body=`<div class="empty">まだ学習履歴がありません。<br>テストを行うと，単語ごとの記録が表示されます。</div>`;
-  }else{
-    const rows=list.map(m=>{
-      const rate=m.count?m.correct/m.count:0;
-      return `<tr class="click" onclick="renderWordDetail(${m.wordId})">
-        <td class="ko" style="font-weight:700">${esc(m.ko)}</td>
-        <td style="color:var(--mute)">${esc(m.ja)}</td>
-        <td class="num">${m.count}</td>
-        <td class="num ${rateClass(rate)}">${Math.round(rate*100)}%</td>
-        <td>${STATUS_JA[m.last.answerStatus]}</td></tr>`;
-    }).join("");
-    body=`<table class="htab"><thead><tr><th>韓国語</th><th>日本語</th><th class="num">回数</th><th class="num">正答率</th><th>最終</th></tr></thead><tbody>${rows}</tbody></table>`;
-  }
-  document.getElementById("s-history").innerHTML=`
-   <div class="page">
-    <div class="page-head"><button class="back" onclick="show('s-home')">‹</button><h2>学習履歴</h2></div>
-    <div class="page-body">${body}</div>
-   </div>`;
-  show("s-history");
-}
 
 function renderWordDetail(wordId,back){
   const w=WORD_BY_ID[wordId];
@@ -1629,7 +1606,7 @@ function renderRoomMenu(){
 /* ============================================================ utils ============================================================ */
 function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
 /* バージョン表示（トップページ） */
-const APP_VERSION="v2.12.7 (2026-06-06)";
+const APP_VERSION="v2.13.0 (2026-06-06)";
 (function(){const el=document.getElementById("appver");if(el)el.textContent=APP_VERSION;})();
 getUserId();
 updateDiagnosis();   // 起動時に診断を初期化
