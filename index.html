@@ -190,17 +190,21 @@ button{font-family:inherit}
 .axbar{flex:1;height:4px;background:rgba(0,0,0,.35);position:relative;border-radius:2px}
 .axdot{position:absolute;top:50%;transform:translateY(-50%);width:18px;height:18px;border-radius:50%;border:3px solid #fff;box-sizing:border-box;transition:left .5s ease}
 .room-panel{position:absolute;left:24px;top:192px;width:554px;height:486px;display:flex;gap:14px}
-.rp-left{flex:1;background:rgba(0,0,0,.55);padding:14px;overflow-y:auto;border-radius:18px}
-.rp-h{font-size:13px;font-weight:800;letter-spacing:2px;color:rgba(255,255,255,.85);margin-bottom:8px}
+.rp-left{flex:1;background:transparent;padding:0;margin:0;overflow-y:auto;scrollbar-width:none}
+.rp-left::-webkit-scrollbar{display:none}
+.th-row{display:flex;align-items:center;gap:12px;background:rgba(0,0,0,.55);padding:5px 10px;margin-bottom:8px;font-size:28px;font-weight:900}
+.th-rank{width:50px;height:50px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:900;flex:0 0 auto}
+.th-score{width:76px;text-align:right}
 .rp-right{flex:1;display:flex;flex-direction:column;gap:14px}
-.rp-btn{flex:1;background:rgba(0,0,0,.8);color:#fff;border:none;border-radius:22px;font-size:32px;font-weight:900;cursor:pointer;font-family:inherit}
+.rp-preview{flex:1.5;background:rgba(0,0,0,.8);border:none;border-radius:0;color:#fff;font-family:inherit;cursor:pointer;padding:12px 14px;display:flex;flex-direction:column;text-align:left;overflow:hidden}
+.rp-preview:active{background:rgba(0,0,0,.65)}
+.pv-row{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:16px;font-weight:700;border-bottom:1px solid rgba(255,255,255,.15);padding:4px 0}
+.pv-ja{color:rgba(255,255,255,.75);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pv-more{margin-top:auto;text-align:right;font-size:15px;font-weight:800;padding-top:6px}
+.rp-btn{flex:1;background:rgba(0,0,0,.8);color:#fff;border:none;border-radius:0;font-size:32px;font-weight:900;cursor:pointer;font-family:inherit}
 .rp-btn:active{background:rgba(0,0,0,.65)}
 .rm-scale{transform-origin:top left;width:602px}
 .rm-inner{position:relative;width:602px;height:176px;margin-top:14px}
-.th-row{display:flex;align-items:center;gap:12px;background:rgba(0,0,0,.55);padding:8px 12px;margin-bottom:6px;font-size:14px;font-weight:800}
-.th-date{font-size:11px;color:var(--faint);width:118px}
-.th-rank{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:19px;font-weight:900}
-.th-score{width:48px;text-align:right}
 .tdetail-sec{margin:16px 0}
 .tdetail-sec .h{color:var(--mute);font-size:11px;font-weight:800;letter-spacing:2px;margin-bottom:6px}
 .tdetail-sec .item{font-size:13px;line-height:1.9}
@@ -258,7 +262,8 @@ button{font-family:inherit}
 .page{height:100dvh;display:flex;flex-direction:column;padding:16px 16px calc(12px + env(safe-area-inset-bottom))}
 .page-head{flex:0 0 auto;display:flex;align-items:center;gap:12px;margin-bottom:10px}
 .page-head h2{font-size:20px;font-weight:800;margin:0}
-.back{background:var(--gray);border:none;color:var(--text);width:38px;height:38px;border-radius:0;font-size:18px;cursor:pointer;flex:0 0 auto}
+.back{background:rgba(0,0,0,.8);border:none;color:#fff;width:38px;height:38px;border-radius:0;font-size:18px;cursor:pointer;flex:0 0 auto}
+.back:active{background:rgba(0,0,0,.65)}
 .page-body{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch}
 .htab{width:100%;border-collapse:collapse;font-size:15px;background:rgba(0,0,0,.1)}
 .htab th,.htab td{padding:8px 6px;border-bottom:1px solid var(--line);text-align:left}
@@ -554,9 +559,10 @@ function applyHomeBg(){applyBgAll(roomBg(curSection));}
 /* ROOM選択：番号・パラメータ・ジオラマを1スライドにまとめ、丸ごと左右スワイプ */
 let _roomScrollT=null,_panelFor=null;
 function toggleRoomPanel(n){_panelFor=_panelFor===n?null:n;buildRoomSlides();}
-/* スライド下部のパネル：左=テスト履歴(日時なし) / 右=単語一覧・ROOM忘却曲線ボタン */
+/* ROOMボード：ROOMメニュータップでジオラマと入れ替わる領域。
+   左=テスト履歴(大きめ表示・最大8件) / 右=単語帳プレビュー(タップで一覧へ)・ROOM忘却曲線 */
 function roomPanelHTML(n){
-  const ids=new Set(LEVEL_SECTIONS[curLevel][n]||[]),byTest={};
+  const idsArr=LEVEL_SECTIONS[curLevel][n]||[],ids=new Set(idsArr),byTest={};
   loadHistory().forEach(r=>{if(r.testId&&ids.has(r.wordId))(byTest[r.testId]=byTest[r.testId]||[]).push(r);});
   const tests=Object.values(byTest).map(a=>({at:a[a.length-1].answeredAt,total:a.reduce((x,r)=>x+(r.score||0),0),n:a.length,ok:a.filter(r=>r.isCorrect).length}))
     .sort((a,b)=>b.at.localeCompare(a.at)).slice(0,8);
@@ -566,11 +572,13 @@ function roomPanelHTML(n){
       <span class="th-rank" style="background:${rk?(RANK_COLORS[rk]||"#555"):"rgba(0,0,0,.22)"}">${rk||"-"}</span>
       <span class="th-score">${disp}</span>
       <span style="color:#FF3B3B">○${t.ok}</span><span style="color:#2F6FE0">×${t.n-t.ok}</span></div>`;
-  }).join(""):'<div style="color:rgba(255,255,255,.85);font-size:14px;font-weight:700;padding:4px 2px">まだテスト履歴が<br>ありません</div>';
+  }).join(""):'<div style="color:rgba(255,255,255,.85);font-size:18px;font-weight:800;padding:8px 2px">まだテスト履歴が<br>ありません</div>';
+  const pv=idsArr.slice(0,5).map(id=>{const w=WORD_BY_ID[id];
+    return `<div class="pv-row"><span class="pv-ko">${esc(w.ko)}</span><span class="pv-ja">${esc(w.ja)}</span></div>`;}).join("");
   return `<div class="room-panel">
-    <div class="rp-left"><div class="rp-h">テスト履歴</div>${rowsH}</div>
+    <div class="rp-left">${rowsH}</div>
     <div class="rp-right">
-      <button class="rp-btn" onclick="renderRoomMenu()">単語一覧</button>
+      <button class="rp-preview" onclick="renderRoomMenu()">${pv}<div class="pv-more">単語一覧 ›</div></button>
       <button class="rp-btn" onclick="renderRoomCurve()">忘却曲線</button>
     </div>
   </div>`;
@@ -1653,7 +1661,7 @@ function renderRoomCurve(){
 /* ============================================================ utils ============================================================ */
 function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
 /* バージョン表示（トップページ） */
-const APP_VERSION="v2.16.0 (2026-06-06)";
+const APP_VERSION="v2.16.2 (2026-06-06)";
 (function(){const el=document.getElementById("appver");if(el)el.textContent=APP_VERSION;})();
 getUserId();
 updateDiagnosis();   // 起動時に診断を初期化
