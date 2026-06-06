@@ -183,7 +183,7 @@ button{font-family:inherit}
 .t-char{display:block;margin:14px auto 0;width:116px;height:116px}
 /* 外枠は廃止（タイプカラーは4軸バー等で使用。applyFrameColorsは要素なしのため何もしない） */
 /* タイプ詳細 */
-.axrow{display:flex;align-items:center;gap:8px;margin:10px 0;font-size:11px;font-weight:700;color:var(--mute)}
+.axrow{display:flex;align-items:center;gap:8px;margin:10px 0;font-size:11px;font-weight:700;color:var(--mute);cursor:pointer}
 .axrow .axl,.axrow .axr{flex:0 0 84px}
 .axrow .axr{text-align:right}
 .axbar{flex:1;height:4px;background:rgba(0,0,0,.35);position:relative;border-radius:2px}
@@ -623,10 +623,10 @@ function renderHome(){
 /* 軸カラー設定（変更可能） 上辺=軸1 F/U, 右辺=軸2 M/C, 下辺=軸3 P/S, 左辺=軸4 Q/D */
 const AXIS_COLORS={F:"#D32F2F",U:"#E6831A",M:"#9C3FE0",C:"#2F6FE0",P:"#1FAD62",S:"#DFB10F",Q:"#E04488",D:"#2FB3D9"};
 const AXES=[
- {no:1,side:"top",L:"F",R:"U",ln:"固定混同",rn:"散漫未定着"},
- {no:2,side:"right",L:"M",R:"C",ln:"意味類似",rn:"場面連想"},
- {no:3,side:"bottom",L:"P",R:"S",ln:"音写",rn:"意味置換"},
- {no:4,side:"left",L:"Q",R:"D",ln:"瞬発誤答",rn:"熟考正答"}
+ {no:1,side:"top",L:"F",R:"U",ln:"固定混同",rn:"散漫未定着",desc:"同じ単語を間違えるとき、毎回同じ誤答を選ぶか（F：思い込みが固定している）、毎回違う誤答を選ぶか（U：記憶がまだ定着していない）を表します。"},
+ {no:2,side:"right",L:"M",R:"C",ln:"意味類似",rn:"場面連想",desc:"四択で間違えるとき、意味が近い選択肢に引かれるか（M）、同じ場面で使われる語や周辺概念に引かれるか（C）を表します。"},
+ {no:3,side:"bottom",L:"P",R:"S",ln:"音写",rn:"意味置換",desc:"書き取りで間違えるとき、音は合っているのに表記（パッチム・母音・子音）がずれるか（P）、意味の近い別の単語を書いてしまうか（S）を表します。"},
+ {no:4,side:"left",L:"Q",R:"D",ln:"瞬発誤答",rn:"熟考正答",desc:"回答の速さと正誤の組み合わせ。すぐ答えて間違えやすいか（Q）、少し時間をかけて比較し正解するか（D）を表します。"}
 ];
 const TYPE_INFO={
  FMPQ:["DJ","似た意味を思い込み、音に寄せて素早く回答するタイプ"],
@@ -833,7 +833,13 @@ function refreshHomeStats(){
 }
 
 /* --- タイプ詳細画面（コード＋キャラクター＋4軸＋タイプの特徴＋16タイプ一覧） --- */
-let _typePeek=null;
+let _typePeek=null,_axisPeek=null;
+function toggleAxisPeek(i){
+  _axisPeek=_axisPeek===i?null:i;
+  const pb=document.querySelector("#s-type .page-body"),st=pb?pb.scrollTop:0;
+  renderTypeDetail();
+  const pb2=document.querySelector("#s-type .page-body");if(pb2)pb2.scrollTop=st;
+}
 function togglePeek(code){
   _typePeek=_typePeek===code?null:code;
   const pb=document.querySelector("#s-type .page-body"),st=pb?pb.scrollTop:0; // スクロール位置を保持
@@ -847,9 +853,11 @@ function renderTypeDetail(){
     const a=d.axes[i],t=Math.round(a.score==null?50:a.score); // t=左寄り度(0-100)
     const domLeft=t>=50,col=AXIS_COLORS[domLeft?ax.L:ax.R];
     const pos=100-t; // 左寄りほど点が左へ
-    return `<div class="axrow"><span class="axl"${domLeft?` style="color:${col}"`:""}>${ax.ln} ${ax.L}</span>
+    let row=`<div class="axrow" onclick="toggleAxisPeek(${i})"><span class="axl"${domLeft?` style="color:${col}"`:""}>${ax.ln} ${ax.L}</span>
       <div class="axbar"><div class="axdot" style="left:calc(${pos}% - 9px);background:${col}"></div></div>
       <span class="axr"${!domLeft?` style="color:${col}"`:""}>${ax.R} ${ax.rn}</span></div>`;
+    if(_axisPeek===i)row+=`<div class="tpeek">${esc(ax.desc)}</div>`; // パラメータの説明
+    return row;
   }).join("");
   // タイプの特徴文（未確定軸がある間は近いタイプとして表示）
   const baseCode=d.code.replace(/\?/g,"");
@@ -1621,7 +1629,7 @@ function renderRoomMenu(){
 /* ============================================================ utils ============================================================ */
 function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
 /* バージョン表示（トップページ） */
-const APP_VERSION="v2.12.6 (2026-06-06)";
+const APP_VERSION="v2.12.7 (2026-06-06)";
 (function(){const el=document.getElementById("appver");if(el)el.textContent=APP_VERSION;})();
 getUserId();
 updateDiagnosis();   // 起動時に診断を初期化
