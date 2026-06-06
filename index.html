@@ -1485,7 +1485,7 @@ function finishTest(){
   // タイプ診断を再計算し外枠色を更新（テスト終了時のみ。回答中は更新しない）
   const dg=updateDiagnosis();
   const typeUpd=(dg.changed&&dg.prevCode&&dg.prevCode!==dg.diag.code)
-    ?`<div class="type-upd">WORD TYPE UPDATED　<b>${esc(dg.prevCode)} → ${esc(dg.diag.code)}</b><button class="btn line" onclick="show('s-home')">ホームで確認する</button></div>`:"";
+    ?`<div class="type-upd">WORD TYPE UPDATED　<b>${esc(dg.prevCode)} → ${esc(dg.diag.code)}</b></div>`:"";
   const SYM={correct:["○","#FF3B3B"],incorrect:["×","#2F6FE0"],unknown:["－","rgba(255,255,255,.75)"],timeout:["△","#DFB10F"]};
   const rows=R.map(r=>{
     const sy=SYM[r.answerStatus]||["−",""];
@@ -1506,6 +1506,7 @@ function finishTest(){
       </div>
       <div class="res-pwr"><span class="pwr-lab">PWR</span><div class="pwr-g"><div id="res-pwrfill" style="background:#00FF37;width:${pwrBefore}%"></div></div><span class="pwr-val">${pwrAfter}%</span><span class="pwr-delta" style="color:${pwrDelta>=0?"#1FAD62":"#FF6B6B"}">${pwrDelta>0?"+":""}${pwrDelta}</span></div>
     </div>
+    ${typeUpd}
     <div class="res-listwrap">
       <table class="rtab"><thead><tr><th class="no">No.</th><th>韓国語</th><th>日本語</th><th>結果</th><th class="num">変化</th></tr></thead>
       <tbody>${rows}</tbody></table>
@@ -1515,7 +1516,6 @@ function finishTest(){
       <button class="btn dark" onclick="renderCurve()">PWRメータを見る</button>
       <button class="btn line full" onclick="show('s-home')">ホームに戻る</button>
     </div>
-    ${typeUpd}
    </div>`;
   show("s-result");
   // PWRが増える演出（前値→後値へフィルがアニメーション）
@@ -1716,7 +1716,7 @@ function renderRoomCurve(){
 /* ============================================================ utils ============================================================ */
 function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
 /* バージョン表示（トップページ） */
-const APP_VERSION="v2.16.10 (2026-06-06)";
+const APP_VERSION="v2.16.11 (2026-06-06)";
 (function(){const el=document.getElementById("appver");if(el)el.textContent=APP_VERSION;})();
 getUserId();
 updateDiagnosis();   // 起動時に診断を初期化
