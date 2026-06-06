@@ -197,7 +197,8 @@ button{font-family:inherit}
 .trow .tcode{font-weight:900;letter-spacing:1px;width:48px}
 .trow{cursor:pointer}
 .trow.cur{background:rgba(0,0,0,.85);box-shadow:0 0 0 2px #fff inset}
-.tpeek{grid-column:1/-1;display:flex;gap:12px;align-items:center;background:rgba(255,255,255,.92);color:#1a1a1a;padding:12px;font-size:12.5px;line-height:1.8;font-weight:700}
+.tpeek{display:flex;gap:12px;align-items:center;background:rgba(255,255,255,.92);color:#1a1a1a;padding:12px;font-size:12.5px;line-height:1.8;font-weight:700;margin-bottom:8px}
+.trow.sel{box-shadow:0 0 0 2px rgba(255,255,255,.8) inset}
 .tpeek img{width:74px;height:74px;flex:0 0 auto}
 .type-upd{margin-top:10px;text-align:center;color:var(--mute);font-size:11px;font-weight:700;letter-spacing:1px}
 .type-upd b{color:var(--text)}
@@ -830,7 +831,12 @@ function refreshHomeStats(){
 
 /* --- タイプ詳細画面（コード＋キャラクター＋4軸＋タイプの特徴＋16タイプ一覧） --- */
 let _typePeek=null;
-function togglePeek(code){_typePeek=_typePeek===code?null:code;renderTypeDetail();}
+function togglePeek(code){
+  _typePeek=_typePeek===code?null:code;
+  const pb=document.querySelector("#s-type .page-body"),st=pb?pb.scrollTop:0; // スクロール位置を保持
+  renderTypeDetail();
+  const pb2=document.querySelector("#s-type .page-body");if(pb2)pb2.scrollTop=st;
+}
 function renderTypeDetail(){
   const d=computeDiagnosis();
   const any=d.axes.some(a=>a.code);
@@ -851,14 +857,11 @@ function renderTypeDetail(){
          :"問題を解くと、あなたの学習傾向が分析されます。");
   // 16タイプ一覧（現在のタイプを強調。タップでキャラクターと説明を展開）
   const list=Object.entries(TYPE_INFO).map(([code,[name]])=>{
-    const cur=d.complete&&code===d.code;
-    let row=`<div class="trow${cur?" cur":""}" onclick="togglePeek('${code}')"><span class="tcode">${code}</span><span>${esc(name)}</span></div>`;
-    if(_typePeek===code){
-      row+=`<div class="tpeek"><img src="characters/${code.toLowerCase()}.svg" alt="">
-        <div><b>${code} ${esc(name)}</b><br>${esc(TYPE_LONG[code]||"")}</div></div>`;
-    }
-    return row;
+    const cur=d.complete&&code===d.code,sel=_typePeek===code;
+    return `<div class="trow${cur?" cur":""}${sel?" sel":""}" onclick="togglePeek('${code}')"><span class="tcode">${code}</span><span>${esc(name)}</span></div>`;
   }).join("");
+  const peek=_typePeek?`<div class="tpeek"><img src="characters/${_typePeek.toLowerCase()}.svg" alt="">
+    <div><b>${_typePeek} ${esc((TYPE_INFO[_typePeek]||[""])[0])}</b><br>${esc(TYPE_LONG[_typePeek]||"")}</div></div>`:"";
   document.getElementById("s-type").innerHTML=`
    <div class="page">
     <div class="page-head"><button class="back" onclick="show('s-home')">‹</button><h2>タイプ詳細</h2></div>
@@ -869,7 +872,7 @@ function renderTypeDetail(){
       </div>
       <div class="tdetail-sec" style="margin-top:24px">${bars}</div>
       <div class="tdetail-sec"><div class="h">このタイプの特徴</div><div class="item">${longTxt}</div></div>
-      <div class="tdetail-sec"><div class="h">16タイプ一覧</div><div class="tlist">${list}</div></div>
+      <div class="tdetail-sec"><div class="h">16タイプ一覧</div>${peek}<div class="tlist">${list}</div></div>
     </div>
    </div>`;
   show("s-type");
@@ -1613,7 +1616,7 @@ function renderRoomMenu(){
 /* ============================================================ utils ============================================================ */
 function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
 /* バージョン表示（トップページ） */
-const APP_VERSION="v2.12.1 (2026-06-06)";
+const APP_VERSION="v2.12.2 (2026-06-06)";
 (function(){const el=document.getElementById("appver");if(el)el.textContent=APP_VERSION;})();
 getUserId();
 updateDiagnosis();   // 起動時に診断を初期化
