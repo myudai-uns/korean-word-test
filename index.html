@@ -12,6 +12,9 @@
 @font-face{font-family:"LINESeedJP";src:url("fonts/LINESeedJP-Rg.woff2") format("woff2");font-weight:400;font-display:swap}
 @font-face{font-family:"LINESeedJP";src:url("fonts/LINESeedJP-Bd.woff2") format("woff2");font-weight:700;font-display:swap}
 @font-face{font-family:"LINESeedJP";src:url("fonts/LINESeedJP-Eb.woff2") format("woff2");font-weight:800;font-display:swap}
+/* 韓国語は LINE Seed KR（JPにハングルが無いためフォールバックで適用） */
+@font-face{font-family:"LINESeedKR";src:url("fonts/LINESeedKR-Rg.woff2") format("woff2");font-weight:400;font-display:swap}
+@font-face{font-family:"LINESeedKR";src:url("fonts/LINESeedKR-Bd.woff2") format("woff2");font-weight:700 800;font-display:swap}
 :root{
   --bg:#000; --panel:#16181c; --panel2:#1f2125; --gray:#26282d; --gray-h:#33363c;
   --line:#2a2d33; --text:#f2f3f5; --mute:#8b909a; --faint:#5c616b;
@@ -19,7 +22,7 @@
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;padding:0;height:100%;background:var(--bg);color:var(--text);
-  font-family:"LINESeedJP","Hiragino Kaku Gothic ProN","Yu Gothic UI","Meiryo","Noto Sans CJK JP","Noto Sans KR",system-ui,sans-serif;
+  font-family:"LINESeedJP","LINESeedKR","Hiragino Kaku Gothic ProN","Yu Gothic UI","Meiryo","Noto Sans CJK JP","Noto Sans KR",system-ui,sans-serif;
   -webkit-font-smoothing:antialiased;overscroll-behavior:none}
 body{display:flex;justify-content:center}
 .app{width:100%;max-width:602px;min-height:100dvh;display:flex;flex-direction:column;position:relative;background:var(--bg)}
@@ -120,7 +123,7 @@ button{font-family:inherit}
 .home-wrap{position:relative;flex:0 0 auto;width:602px;height:1178px;background:#E3A38D;
   transform-origin:top center;color:#FFFFFF;font-weight:800; /* 見本はExtraBold相当 */
   transition:background-color .5s ease;
-  font-family:"LINESeedJP","Noto Sans KR","Hiragino Kaku Gothic ProN",sans-serif}
+  font-family:"LINESeedJP","LINESeedKR","Hiragino Kaku Gothic ProN",sans-serif}
 /* バー：暗いトラック＋内側に角丸フィル（見本準拠） */
 .home-wrap .gauge{position:absolute;background:#333333;border-radius:999px;padding:3px;box-sizing:border-box;z-index:2}
 .home-wrap .gfill{height:100%;border-radius:999px;transition:width .5s ease;width:0}
@@ -130,7 +133,8 @@ button{font-family:inherit}
 .hv-level{position:absolute;left:176px;top:44px;display:flex;align-items:baseline;gap:3px;line-height:1;z-index:2;font-size:20px}
 .hv-level span{font-size:38px}
 .hv-code{position:absolute;right:47px;top:42px;font-size:40px;letter-spacing:1px;line-height:1;cursor:pointer;z-index:2}
-.status-panel{position:absolute;left:166px;top:83px;width:403px;height:64px;border-radius:32px;background:rgba(0,0,0,.8);z-index:1}
+.status-panel{position:absolute;left:166px;top:83px;width:403px;height:64px;border-radius:32px;background:rgba(0,0,0,.8);z-index:1;cursor:pointer}
+.hv-lab,.hv-xpg,.hv-pwrg{pointer-events:none}
 .hv-lab{position:absolute;font-size:18px;line-height:19px;z-index:2}
 .hv-xplabel{left:175px;top:92px;width:80px;text-align:right}
 .hv-xpg{left:263px;top:92px;width:178px;height:19px}
@@ -147,8 +151,8 @@ button{font-family:inherit}
 .room-slide{position:relative;flex:0 0 602px;width:602px;height:1178px;scroll-snap-align:start}
 .slide-inner{position:absolute;left:0;top:255px;width:602px;height:686px}
 /* ROOMパラメータ（ラベル/番号・語数/バー/%の間に余白。ランクD,B=36px・A=98pxで下端揃え） */
-.hv-roomlabel{position:absolute;left:83px;top:0;font-size:36px;letter-spacing:2px;line-height:1}
-.hv-roomno{position:absolute;left:72px;top:42px;font-size:108px;line-height:1}
+.hv-roomlabel{position:absolute;left:83px;top:0;font-size:36px;letter-spacing:2px;line-height:1;cursor:pointer}
+.hv-roomno{position:absolute;left:72px;top:42px;font-size:108px;line-height:1;cursor:pointer}
 .hv-learned{position:absolute;left:244px;top:10px;font-size:40px;line-height:1}
 .hv-roompwr{position:absolute;left:244px;top:76px;font-size:48px;line-height:1}
 .hv-learned .unit{font-size:24px;margin-left:4px}
@@ -275,7 +279,7 @@ button{font-family:inherit}
       <div class="avatar-circle" onclick="renderTypeDetail()"><img class="avatar-image" id="hv-char" src="characters/analyzing.svg" alt=""></div>
       <div class="hv-level" id="hv-level">Lv.<span>1</span></div>
       <div class="hv-code" id="hv-code" onclick="renderTypeDetail()">----</div>
-      <div class="status-panel"></div>
+      <div class="status-panel" onclick="renderCurve()"></div>
       <div class="hv-lab hv-xplabel">XP</div>
       <div class="gauge hv-xpg"><div class="gfill" id="hv-xpfill" style="background:#FFFF37"></div></div>
       <div class="hv-lab hv-xpval" id="hv-xpval">0/100</div>
@@ -305,6 +309,8 @@ button{font-family:inherit}
   <div class="screen" id="s-curve"></div>
   <!-- TYPE DETAIL -->
   <div class="screen" id="s-type"></div>
+  <!-- ROOM MENU（単語一覧・学習履歴） -->
+  <div class="screen" id="s-roommenu"></div>
 </div>
 
 <script src="words-middle.js"></script>
@@ -548,8 +554,8 @@ function buildRoomSlides(){
     const big=rLast?circ("rank-b",rLast):`<div class="rank-b" style="background:rgba(0,0,0,.22)">-</div>`;
     return `<div class="room-slide" data-n="${n}" style="background:${roomBg(n)}">
       <div class="slide-inner">
-      <div class="hv-roomlabel">ROOM</div>
-      <div class="hv-roomno">${nn}</div>
+      <div class="hv-roomlabel" onclick="renderRoomMenu()">ROOM</div>
+      <div class="hv-roomno" onclick="renderRoomMenu()">${nn}</div>
       <div class="hv-learned">${ri.learned}<span class="unit">語</span></div>
       <div class="gauge hv-wordsg"><div class="gfill" style="background:#00FFFF;width:${Math.round(ri.learned/ri.total*100)}%"></div></div>
       <div class="hv-roompwr">${ri.pwr}<span class="unit">%</span></div>
@@ -1443,7 +1449,7 @@ function renderHistory(){
   show("s-history");
 }
 
-function renderWordDetail(wordId){
+function renderWordDetail(wordId,back){
   const w=WORD_BY_ID[wordId];
   const recs=loadHistory().filter(r=>r.wordId===wordId).sort((a,b)=>a.answeredAt.localeCompare(b.answeredAt));
   const dirJa={jp_to_kr:"日→韓",kr_to_jp:"韓→日"};
@@ -1456,7 +1462,7 @@ function renderWordDetail(wordId){
   const rate=Math.round(displayScore(getStat(wordId),Date.now())),ms=memState(rate);
   document.getElementById("s-wdetail").innerHTML=`
    <div class="page">
-    <div class="page-head"><button class="back" onclick="renderCurve(_curveTab)">‹</button><h2>単語詳細</h2></div>
+    <div class="page-head"><button class="back" onclick="${back==='room'?"renderRoomMenu()":"renderCurve(_curveTab)"}">‹</button><h2>単語詳細</h2></div>
     <div class="wdetail-head"><div class="ko">${esc(w.ko)}</div><div class="ja">${esc(w.ja)}（${esc(w.cat)}）</div>
       <div style="margin-top:6px;font-size:13px;font-weight:800">推定記憶率 <span class="${ms.cls}">${rate}%・${ms.label}</span></div></div>
     ${note}
@@ -1566,10 +1572,33 @@ function curveForecast(now){
 }
 function startReviewTest(ids){curLevel="middle";curSection=1;startTest(ids);} // 復習予報は中級Section01(基本100語)ベース
 
+/* ============================================================ ROOMメニュー（単語一覧＋学習履歴） ============================================================ */
+function renderRoomMenu(){
+  const ids=sectionIds(),s=loadStats(),now=Date.now();
+  const rows=ids.map(id=>{
+    const w=WORD_BY_ID[id],st=s[id];
+    if(st&&st.reviewCount>0){
+      const rate=Math.round(displayScore(getStat(id,s),now)),ms=memState(rate);
+      return `<tr class="click" onclick="renderWordDetail(${id},'room')">
+        <td class="ko" style="font-weight:700">${esc(w.ko)}</td><td style="color:var(--mute)">${esc(w.ja)}</td>
+        <td class="num">${st.reviewCount}</td><td class="num ${ms.cls}">${rate}%</td></tr>`;
+    }
+    return `<tr style="opacity:.5"><td class="ko" style="font-weight:700">${esc(w.ko)}</td><td style="color:var(--mute)">${esc(w.ja)}</td><td class="num">—</td><td class="num">未学習</td></tr>`;
+  }).join("");
+  document.getElementById("s-roommenu").innerHTML=`
+   <div class="page">
+    <div class="page-head"><button class="back" onclick="show('s-home')">‹</button><h2>ROOM ${String(curSection).padStart(2,"0")} 単語一覧</h2></div>
+    <div class="page-body">
+      <table class="htab"><thead><tr><th>韓国語</th><th>日本語</th><th class="num">出題</th><th class="num">記憶率</th></tr></thead><tbody>${rows}</tbody></table>
+    </div>
+   </div>`;
+  show("s-roommenu");
+}
+
 /* ============================================================ utils ============================================================ */
 function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
 /* バージョン表示（トップページ） */
-const APP_VERSION="v2.10.0 (2026-06-06)";
+const APP_VERSION="v2.11.0 (2026-06-06)";
 (function(){const el=document.getElementById("appver");if(el)el.textContent=APP_VERSION;})();
 getUserId();
 updateDiagnosis();   // 起動時に診断を初期化
