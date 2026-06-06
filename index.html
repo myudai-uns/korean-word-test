@@ -280,6 +280,8 @@ button{font-family:inherit}
 .bignote{background:var(--panel);border:1px solid var(--line);padding:14px;text-align:center;font-size:14px;line-height:1.8;font-weight:700;margin-bottom:12px}
 .bignote b{color:var(--green);font-size:18px}
 .bignote .improve{color:var(--green);font-weight:800}
+#s-wdetail .htab th,#s-wdetail .htab td{padding:6px 4px}
+#s-wdetail .htab td:first-child{font-size:11px;color:var(--faint)}
 .wdetail-head{margin-bottom:6px}
 .wdetail-head .ko{font-size:26px;font-weight:800}
 .wdetail-head .ja{color:var(--mute);font-size:14px;margin-top:2px}
@@ -1416,7 +1418,7 @@ function finishTest(){
   const dg=updateDiagnosis();
   const typeUpd=(dg.changed&&dg.prevCode&&dg.prevCode!==dg.diag.code)
     ?`<div class="type-upd">WORD TYPE UPDATED　<b>${esc(dg.prevCode)} → ${esc(dg.diag.code)}</b><button class="btn line" onclick="show('s-home')">ホームで確認する</button></div>`:"";
-  const SYM={correct:["○","#1FAD62"],incorrect:["×","#2F6FE0"],unknown:["－","rgba(255,255,255,.75)"],timeout:["△","#DFB10F"]};
+  const SYM={correct:["○","#FF3B3B"],incorrect:["×","#2F6FE0"],unknown:["－","rgba(255,255,255,.75)"],timeout:["△","#DFB10F"]};
   const rows=R.map(r=>{
     const sy=SYM[r.answerStatus]||["－",""];
     const hb=r.isHintProvided?'<span class="hint-badge">ヒント</span>':'';
@@ -1434,7 +1436,7 @@ function finishTest(){
         <div class="rp"><span class="rp-num">${ri.learned}<i>語</i></span><div class="rp-g"><div style="background:#00FFFF;width:${Math.round(ri.learned/ri.total*100)}%"></div></div></div>
         <div class="rp"><span class="rp-num">${ri.pwr}<i>%</i></span><div class="rp-g"><div style="background:#00FF37;width:${ri.pwr}%"></div></div></div>
       </div>
-      <div class="res-counts"><span style="color:#1FAD62">○ ${nCorrect}</span><span style="color:#2F6FE0">× ${nWrong}</span></div>
+      <div class="res-counts"><span style="color:#FF3B3B">○ ${nCorrect}</span><span style="color:#2F6FE0">× ${nWrong}</span></div>
     </div>
     <div class="res-listwrap">
       <table class="rtab"><thead><tr><th class="no">No.</th><th>韓国語</th><th>日本語</th><th>結果</th></tr></thead>
@@ -1459,9 +1461,9 @@ function renderWordDetail(wordId,back){
   const w=WORD_BY_ID[wordId];
   const recs=loadHistory().filter(r=>r.wordId===wordId).sort((a,b)=>a.answeredAt.localeCompare(b.answeredAt));
   const dirJa={jp_to_kr:"日→韓",kr_to_jp:"韓→日"};
-  const SYM={correct:["○","#1FAD62"],incorrect:["×","#2F6FE0"],unknown:["－","rgba(255,255,255,.75)"],timeout:["△","#DFB10F"]};
+  const SYM={correct:["○","#FF3B3B"],incorrect:["×","#2F6FE0"],unknown:["－","rgba(255,255,255,.75)"],timeout:["△","#DFB10F"]};
   const rows=recs.map(r=>{
-    const dir=(r.answerType==="writing"?"書き取り":dirJa[r.direction])+(r.isHintProvided?"・ヒント":"");
+    const dir=(r.direction==="kr_to_jp"?"🇰🇷":"🇯🇵")+(r.answerType==="writing"?"✍":"")+(r.isHintProvided?"💡":""); // 出題元の国旗
     const mem=(r.displayMemoryScoreAfterDecay!=null)?r.displayMemoryScoreAfterDecay+"%":"—";
     const sy=SYM[r.answerStatus]||["－",""];
     return `<tr><td>${fmtDate(r.answeredAt)}</td><td>${dir}</td><td style="color:${sy[1]};font-weight:900">${sy[0]}</td><td class="num">${(r.responseTimeMs/1000).toFixed(1)}</td><td class="num">${r.score}</td><td class="num">${mem}</td></tr>`;
@@ -1606,7 +1608,7 @@ function renderRoomMenu(){
 /* ============================================================ utils ============================================================ */
 function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
 /* バージョン表示（トップページ） */
-const APP_VERSION="v2.13.0 (2026-06-06)";
+const APP_VERSION="v2.13.1 (2026-06-06)";
 (function(){const el=document.getElementById("appver");if(el)el.textContent=APP_VERSION;})();
 getUserId();
 updateDiagnosis();   // 起動時に診断を初期化
