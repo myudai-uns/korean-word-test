@@ -656,7 +656,7 @@ function roomListHTML(n){
     return `<div class="wl-row wl-un"><span class="wl-no">${no}</span><span class="wl-ko">${esc(w.ko)}</span><span class="wl-ja">${esc(w.ja)}</span><span class="wl-rate">未</span></div>`;
   }).join("");
   return `<div class="slide-list">
-    <div class="wl-head"><span class="wl-no">No.</span><span class="wl-ko">韓国語</span><span class="wl-ja">日本語</span><span class="wl-rate">記憶率(%)</span></div>
+    <div class="wl-head"><span class="wl-no">No.</span><span class="wl-ko">韓国語</span><span class="wl-ja">日本語</span><span class="wl-rate">記憶</span></div>
     ${rows}</div>`;
 }
 function roomInfoFor(n){
@@ -1839,7 +1839,7 @@ function renderRoomCurve(){
 /* ============================================================ utils ============================================================ */
 function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
 /* バージョン表示（トップページ） */
-const APP_VERSION="v2.20.1 (2026-06-07)";
+const APP_VERSION="v2.20.2 (2026-06-07)";
 (function(){const el=document.getElementById("appver");if(el)el.textContent=APP_VERSION;})();
 getUserId();
 updateDiagnosis();   // 起動時に診断を初期化
