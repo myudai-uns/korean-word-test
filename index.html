@@ -120,7 +120,7 @@ button{font-family:inherit}
 /* ===== タイプ診断（V2.1: コード＋キャラクターのみの引き算デザイン） ===== */
 /* ===== ホーム（602×1178基準・サーモンピンク背景・絶対配置） ===== */
 #s-home{background:#E3A38D;flex-direction:row;justify-content:center;align-items:flex-start;overflow:hidden;transition:background-color .5s ease}
-.home-wrap{position:relative;flex:0 0 auto;width:602px;height:1178px;background:#E3A38D;
+.home-wrap{transition:transform .4s ease;position:relative;flex:0 0 auto;width:602px;height:1178px;background:#E3A38D;
   transform-origin:top center;color:#FFFFFF;font-weight:800; /* 見本はExtraBold相当 */
   transition:background-color .5s ease;
   font-family:"LINESeedJP","LINESeedKR","Hiragino Kaku Gothic ProN",sans-serif}
@@ -179,6 +179,7 @@ button{font-family:inherit}
   transform:translateY(calc(var(--p,0)*-190px));transition:transform .35s ease} /* ヘッダーも同時に上へ */
 .home-head>*{pointer-events:auto}
 .slide-img,.room-ph{opacity:calc(1 - var(--p,0));transition:opacity .35s ease,transform .35s ease} /* 写真はフェードアウト */
+.home-wrap.dragging{transition:none}
 .home-wrap.dragging .slide-inner,.home-wrap.dragging .home-head,.home-wrap.dragging .slide-img,.home-wrap.dragging .room-ph{transition:none}
 .slide-list{position:absolute;left:24px;top:344px;width:554px;height:604px;overflow-y:auto;background:rgba(0,0,0,.35);scrollbar-width:none;
   opacity:var(--p,1);transition:opacity .35s ease} /* 入場はJSでフェードイン、下スワイプは--p連動でフェードアウト */
@@ -710,14 +711,14 @@ function buildRoomSlides(){
   if(!el.dataset.bound){
     el.dataset.bound="1";
     // 上スワイプ: ROOMメニューがスワイプに連動して上部へ移動し、到達で単語一覧を表示
-    let _ty=null,_tx=null,_vdrag=false,_dragDown=false;
-    el.addEventListener("touchstart",e=>{_ty=e.touches[0].clientY;_tx=e.touches[0].clientX;_vdrag=false;_dragDown=false;},{passive:true});
+    let _ty=null,_tx=null,_vdrag=false,_dragDown=false,_dragDash=false;
+    el.addEventListener("touchstart",e=>{_ty=e.touches[0].clientY;_tx=e.touches[0].clientX;_vdrag=false;_dragDown=false;_dragDash=false;},{passive:true});
     el.addEventListener("touchmove",e=>{
       if(_ty==null)return;
       const dy=e.touches[0].clientY-_ty,dx=e.touches[0].clientX-_tx;
       if(!_vdrag){
-        if(!_listMode&&dy>40&&Math.abs(dy)>Math.abs(dx)*1.2){
-          _ty=null;renderDashboard();return; // 通常時の下スワイプ=統合ステータスページ
+        if(!_listMode&&dy>12&&Math.abs(dy)>Math.abs(dx)*1.2){
+          _vdrag=true;_dragDash=true;document.getElementById("homewrap").classList.add("dragging"); // 下スワイプ=全体が連動して下降
         }else if(!_listMode&&dy<-12&&Math.abs(dy)>Math.abs(dx)*1.2){
           _vdrag=true;document.getElementById("homewrap").classList.add("dragging");
         }else if(_listMode&&dy>12&&Math.abs(dy)>Math.abs(dx)*1.2){
@@ -728,12 +729,26 @@ function buildRoomSlides(){
         }else return;
       }
       e.preventDefault();
-      if(_dragDown)setLift(Math.max(-LIFT_MAX,Math.min(0,-LIFT_MAX+dy)));
+      if(_dragDash)document.getElementById("homewrap").style.setProperty("--down",Math.max(0,dy)+"px");
+      else if(_dragDown)setLift(Math.max(-LIFT_MAX,Math.min(0,-LIFT_MAX+dy)));
       else setLift(Math.max(-LIFT_MAX,Math.min(0,dy)));
     },{passive:false});
     el.addEventListener("touchend",()=>{
       if(_vdrag){
         const w=document.getElementById("homewrap");w.classList.remove("dragging");
+        if(_dragDash){
+          const cd=parseFloat(w.style.getPropertyValue("--down"))||0;
+          if(cd>150){
+            // ヘッダーが最下部に達するまで滑りきってからステータスを表示
+            w.style.setProperty("--down",(window.innerHeight+60)+"px");
+            setTimeout(()=>{
+              renderDashboard();
+              w.classList.add("dragging");w.style.setProperty("--down","0px");
+              requestAnimationFrame(()=>w.classList.remove("dragging"));
+            },420);
+          }else w.style.setProperty("--down","0px");
+          _ty=null;_vdrag=false;_dragDash=false;return;
+        }
         const cur=parseFloat(w.style.getPropertyValue("--lift"))||0;
         if(_dragDown){
           if(cur>=-LIFT_MAX+80){exitListMode();} // 下スワイプで元に戻る（写真はフェードイン）
@@ -761,7 +776,7 @@ function buildRoomSlides(){
 function scaleHome(){
   const el=document.getElementById("homewrap");if(!el)return;
   const s=Math.min((window.innerWidth||602)/602,1);
-  el.style.transform=`scale(${s})`;
+  el.style.transform=`translateY(var(--down,0px)) scale(${s})`;
   el.style.marginBottom=`-${Math.round(1178*(1-s))}px`; // transformはレイアウト高を変えないため余白を回収
 }
 window.addEventListener("resize",scaleHome);
@@ -1824,7 +1839,7 @@ function renderRoomCurve(){
 /* ============================================================ utils ============================================================ */
 function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
 /* バージョン表示（トップページ） */
-const APP_VERSION="v2.20.0 (2026-06-07)";
+const APP_VERSION="v2.20.1 (2026-06-07)";
 (function(){const el=document.getElementById("appver");if(el)el.textContent=APP_VERSION;})();
 getUserId();
 updateDiagnosis();   // 起動時に診断を初期化
