@@ -189,6 +189,12 @@ button{font-family:inherit}
 .axrow .axr{text-align:right}
 .axbar{flex:1;height:4px;background:rgba(0,0,0,.35);position:relative;border-radius:2px}
 .axdot{position:absolute;top:50%;transform:translateY(-50%);width:18px;height:18px;border-radius:50%;border:3px solid #fff;box-sizing:border-box;transition:left .5s ease}
+.room-panel{position:absolute;left:24px;top:192px;width:554px;height:486px;display:flex;gap:14px}
+.rp-left{flex:1;background:rgba(0,0,0,.55);padding:14px;overflow-y:auto;border-radius:18px}
+.rp-h{font-size:13px;font-weight:800;letter-spacing:2px;color:rgba(255,255,255,.85);margin-bottom:8px}
+.rp-right{flex:1;display:flex;flex-direction:column;gap:14px}
+.rp-btn{flex:1;background:rgba(0,0,0,.8);color:#fff;border:none;border-radius:22px;font-size:32px;font-weight:900;cursor:pointer;font-family:inherit}
+.rp-btn:active{background:rgba(0,0,0,.65)}
 .rm-scale{transform-origin:top left;width:602px}
 .rm-inner{position:relative;width:602px;height:176px;margin-top:14px}
 .th-row{display:flex;align-items:center;gap:12px;background:rgba(0,0,0,.55);padding:8px 12px;margin-bottom:6px;font-size:14px;font-weight:800}
@@ -293,7 +299,7 @@ button{font-family:inherit}
 #s-wdetail .htab td:first-child{font-size:11px;color:var(--faint)}
 .wdetail-head{margin-bottom:6px}
 .wdetail-head .ko{font-size:26px;font-weight:800}
-.wdetail-head .ja{color:var(--mute);font-size:14px;margin-top:2px}
+.wdetail-head .ja{color:#FFFFFF;font-size:26px;font-weight:800;margin-top:2px}
 </style>
 </head>
 <body>
@@ -545,7 +551,29 @@ function applyBgAll(bg){
 function applyHomeBg(){applyBgAll(roomBg(curSection));}
 
 /* ROOM選択：番号・パラメータ・ジオラマを1スライドにまとめ、丸ごと左右スワイプ */
-let _roomScrollT=null;
+let _roomScrollT=null,_panelFor=null;
+function toggleRoomPanel(n){_panelFor=_panelFor===n?null:n;buildRoomSlides();}
+/* スライド下部のパネル：左=テスト履歴(日時なし) / 右=単語一覧・ROOM忘却曲線ボタン */
+function roomPanelHTML(n){
+  const ids=new Set(LEVEL_SECTIONS[curLevel][n]||[]),byTest={};
+  loadHistory().forEach(r=>{if(r.testId&&ids.has(r.wordId))(byTest[r.testId]=byTest[r.testId]||[]).push(r);});
+  const tests=Object.values(byTest).map(a=>({at:a[a.length-1].answeredAt,total:a.reduce((x,r)=>x+(r.score||0),0),n:a.length,ok:a.filter(r=>r.isCorrect).length}))
+    .sort((a,b)=>b.at.localeCompare(a.at)).slice(0,8);
+  const rowsH=tests.length?tests.map(t=>{
+    const full=t.n>=12,rk=full?rankFor(t.total):null,disp=t.total%1===0?t.total:t.total.toFixed(1);
+    return `<div class="th-row">
+      <span class="th-rank" style="background:${rk?(RANK_COLORS[rk]||"#555"):"rgba(0,0,0,.22)"}">${rk||"-"}</span>
+      <span class="th-score">${disp}</span>
+      <span style="color:#FF3B3B">○${t.ok}</span><span style="color:#2F6FE0">×${t.n-t.ok}</span></div>`;
+  }).join(""):'<div style="color:rgba(255,255,255,.85);font-size:14px;font-weight:700;padding:4px 2px">まだテスト履歴が<br>ありません</div>';
+  return `<div class="room-panel">
+    <div class="rp-left"><div class="rp-h">テスト履歴</div>${rowsH}</div>
+    <div class="rp-right">
+      <button class="rp-btn" onclick="renderRoomMenu()">単語一覧</button>
+      <button class="rp-btn" onclick="renderRoomCurve()">忘却曲線</button>
+    </div>
+  </div>`;
+}
 function roomInfoFor(n){
   const ids=LEVEL_SECTIONS[curLevel][n]||[],s=loadStats(),now=Date.now();
   const learned=ids.filter(id=>s[id]&&s[id].reviewCount>0);
@@ -578,9 +606,9 @@ function buildRoomSlides(){
     const big=rLast?circ("rank-b",rLast):`<div class="rank-b" style="background:rgba(0,0,0,.22)">-</div>`;
     return `<div class="room-slide" data-n="${n}" style="background:${roomBg(n)}">
       <div class="slide-inner">
-      <div class="rmenu-bg" onclick="renderRoomMenu()"></div>
-      <div class="hv-roomlabel" onclick="renderRoomMenu()">ROOM</div>
-      <div class="hv-roomno" onclick="renderRoomMenu()">${nn}</div>
+      <div class="rmenu-bg" onclick="toggleRoomPanel(${n})"></div>
+      <div class="hv-roomlabel" onclick="toggleRoomPanel(${n})">ROOM</div>
+      <div class="hv-roomno" onclick="toggleRoomPanel(${n})">${nn}</div>
       <div class="hv-learned">${ri.learned}<span class="unit">語</span></div>
       <div class="gauge hv-wordsg"><div class="gfill" style="background:#00FFFF;width:${Math.round(ri.learned/ri.total*100)}%"></div></div>
       <div class="hv-roompwr">${ri.pwr}<span class="unit">%</span></div>
@@ -588,10 +616,10 @@ function buildRoomSlides(){
       ${rPrev2?circ("rank-s",rPrev2):""}
       ${rPrev1?circ("rank-s rank-s1",rPrev1):""}
       ${big}
-      <div class="room-ph">${nn}</div>
+      ${_panelFor===n?roomPanelHTML(n):`<div class="room-ph">${nn}</div>
       <img class="slide-img" src="rooms/${curLevel}-${nn}.webp" alt="" loading="lazy"
         onload="this.previousElementSibling.style.display='none'"
-        onerror="this.style.display='none'">
+        onerror="this.style.display='none'">`}
       </div>
     </div>`;
   }).join("");
@@ -1476,7 +1504,7 @@ function renderWordDetail(wordId,back){
   const dirJa={jp_to_kr:"日→韓",kr_to_jp:"韓→日"};
   const SYM={correct:["○","#FF3B3B"],incorrect:["×","#2F6FE0"],unknown:["－","rgba(255,255,255,.75)"],timeout:["△","#DFB10F"]};
   const rows=recs.map(r=>{
-    const dir=(r.direction==="kr_to_jp"?"🇰🇷":"🇯🇵")+(r.answerType==="writing"?"✍":"")+(r.isHintProvided?"💡":""); // 出題元の国旗
+    const dir=(r.answerType==="writing"?"✍":(r.direction==="kr_to_jp"?"🇰🇷":"🇯🇵"))+(r.isHintProvided?"💡":""); // 書き取りは旗なし
     const mem=(r.displayMemoryScoreAfterDecay!=null)?r.displayMemoryScoreAfterDecay+"%":"—";
     const sy=SYM[r.answerStatus]||["－",""];
     return `<tr><td>${fmtDate(r.answeredAt)}</td><td>${dir}</td><td style="color:${sy[1]};font-weight:900">${sy[0]}</td><td class="num">${(r.responseTimeMs/1000).toFixed(1)}</td><td class="num">${r.score}</td><td class="num">${mem}</td></tr>`;
@@ -1486,8 +1514,8 @@ function renderWordDetail(wordId,back){
   document.getElementById("s-wdetail").innerHTML=`
    <div class="page">
     <div class="page-head"><button class="back" onclick="${back==='room'?"renderRoomMenu()":"renderCurve()"}">‹</button><h2>単語詳細</h2></div>
-    <div class="wdetail-head"><div class="ko">${esc(w.ko)}</div><div class="ja">${esc(w.ja)}（${esc(w.cat)}）</div>
-      <div style="margin-top:6px;font-size:13px;font-weight:800">推定記憶率 <span class="${ms.cls}">${rate}%・${ms.label}</span></div></div>
+    <div class="wdetail-head"><div class="ko">${esc(w.ko)}</div><div class="ja">${esc(w.ja)}</div>
+      <div style="margin-top:6px;font-size:13px;font-weight:800;display:flex;gap:16px;align-items:center;flex-wrap:wrap">推定記憶率 <span class="${ms.cls}">${rate}%・${ms.label}</span><span>${esc(w.cat)}</span></div></div>
     ${note}
     <div class="page-body">
       <table class="htab"><thead><tr><th>日時</th><th>方向</th><th>結果</th><th class="num">時間</th><th class="num">得点</th><th class="num">記憶率</th></tr></thead>
@@ -1505,11 +1533,11 @@ function memState(rate){ // 状態ラベル
 }
 /* 全体平均を時間軸で前方投影（学習直後→30日後） */
 const PROJ=[{l:"直後",h:0},{l:"1h",h:1},{l:"6h",h:6},{l:"12h",h:12},{l:"1日",h:24},{l:"3日",h:72},{l:"7日",h:168},{l:"14日",h:336},{l:"30日",h:720}];
-function projectionPoints(nowMs){
-  const s=loadStats();
+function projectionPoints(nowMs,words){
+  const s=loadStats(),list=words||WORDS;
   return PROJ.map((p,i)=>{
-    let t=0;WORDS.forEach(w=>{const st=getStat(w.id,s);t+=displayScore(st,nowMs)*Math.exp(-p.h/Math.max(1,stabilityHours(st)));});
-    return{i,label:p.l,rate:t/WORDS.length};
+    let t=0;list.forEach(w=>{const st=getStat(w.id,s);t+=displayScore(st,nowMs)*Math.exp(-p.h/Math.max(1,stabilityHours(st)));});
+    return{i,label:p.l,rate:t/Math.max(1,list.length)};
   });
 }
 /* 各単語が記憶率70%を下回るまでの時間(h)。既に70%未満は0 */
@@ -1530,79 +1558,52 @@ function memChart(pts){
 }
 
 function renderCurve(){
-  const now=Date.now(),cond=Math.round(overallCondition(now));
+  const now=Date.now(),cond=Math.round(overallCondition(now)),s=loadStats();
+  // 復習予報
+  const arr=WORDS.map(w=>({w,h:hoursTo70(getStat(w.id,s),now)})).sort((a,b)=>a.h-b.h);
+  const today=arr.filter(a=>a.h<=24).length,tom=arr.filter(a=>a.h>24&&a.h<=48).length,d3c=arr.filter(a=>a.h>48&&a.h<=72).length;
+  const urgent=arr.filter(a=>a.h<=72).slice(0,12).map(a=>a.w.id);
+  const cards=`<div class="curve-stats">
+      <div class="cstat"><div class="k">今日中に復習</div><div class="v ms-urgent">${today}語</div></div>
+      <div class="cstat"><div class="k">明日までに復習</div><div class="v ms-review">${tom}語</div></div>
+      <div class="cstat"><div class="k">3日以内に復習</div><div class="v">${d3c}語</div></div>
+    </div>`;
+  // 単語カテゴリ別
+  const grows=Object.entries(CATS).map(([cat,ids])=>{
+    let sum=0,need=0;ids.forEach(id=>{const r=displayScore(getStat(id,s),now);sum+=r;if(r<70)need++;});
+    const rate=Math.round(sum/ids.length),ms=memState(rate);
+    return `<tr><td style="font-weight:700">${esc(cat)}</td><td class="num ${ms.cls}">${rate}%</td><td class="num">${need}語</td></tr>`;
+  }).join("");
+  const groups=`<table class="htab"><thead><tr><th>カテゴリ</th><th class="num">記憶率</th><th class="num">要復習</th></tr></thead><tbody>${grows}</tbody></table>`;
+  const btn=urgent.length?`<button class="btn dark" style="margin-top:14px" onclick='startReviewTest(${JSON.stringify(urgent)})'>この${urgent.length}語で復習</button>`:"";
   document.getElementById("s-curve").innerHTML=`
    <div class="page">
     <div class="page-head"><button class="back" onclick="show('s-home')">‹</button><h2>忘却曲線</h2></div>
     <div class="cond"><div class="cond-k">記憶コンディション</div><div class="cond-v">${cond} <span>/ 100</span></div></div>
     <div class="page-body">
       ${curveOverall(now)}
-      <div class="tdetail-sec"><div class="h">復習予報</div>${curveForecast(now)}</div>
-      <div class="tdetail-sec"><div class="h">単語別</div>${curveWords(now)}</div>
+      <div class="tdetail-sec"><div class="h">復習予報</div>${cards}</div>
+      <div class="tdetail-sec"><div class="h">単語カテゴリ別</div>${groups}</div>
+      ${btn}
     </div>
    </div>`;
   show("s-curve");
 }
-function curveOverall(now){
-  return `<div class="chartbox">${memChart(projectionPoints(now))}</div>
+function curveOverall(now,words){
+  return `<div class="chartbox">${memChart(projectionPoints(now,words))}</div>
     <div style="color:var(--faint);font-size:11px;line-height:1.7;margin-top:8px">※ 横軸＝学習からの経過時間，縦軸＝推定記憶率（100語平均）。黄色の点線=70%ライン。テストのたびに即時更新されます。</div>`;
 }
-function curveWords(now){
+function curveWords(now,words){
   const s=loadStats();
-  const list=WORDS.map(w=>({w,rate:Math.round(displayScore(getStat(w.id,s),now))})).sort((a,b)=>a.rate-b.rate);
+  const list=(words||WORDS).map(w=>({w,rate:Math.round(displayScore(getStat(w.id,s),now))})).sort((a,b)=>a.rate-b.rate);
   const rows=list.map(({w,rate})=>{const ms=memState(rate);return `<tr class="click" onclick="renderWordDetail(${w.id})"><td class="ko" style="font-weight:700">${esc(w.ko)}</td><td style="color:var(--mute)">${esc(w.ja)}</td><td class="num ${ms.cls}">${rate}%</td><td class="${ms.cls}">${ms.label}</td></tr>`;}).join("");
   return `<table class="htab"><thead><tr><th>韓国語</th><th>日本語</th><th class="num">記憶率</th><th>状態</th></tr></thead><tbody>${rows}</tbody></table>`;
 }
-function curveForecast(now){
-  const s=loadStats();
-  const arr=WORDS.map(w=>({w,h:hoursTo70(getStat(w.id,s),now),rate:displayScore(getStat(w.id,s),now)})).sort((a,b)=>a.h-b.h);
-  const today=arr.filter(a=>a.h<=24),tomorrow=arr.filter(a=>a.h>24&&a.h<=48),d3=arr.filter(a=>a.h>48&&a.h<=72);
-  const urgent=arr.filter(a=>a.h<=72).slice(0,12).map(a=>a.w.id);
-  const startBtn=urgent.length?`<button class="btn primary" style="margin-top:14px" onclick='startReviewTest(${JSON.stringify(urgent)})'>この${urgent.length}語で復習テスト</button>`:"";
-  const listRows=arr.filter(a=>a.h<=72).slice(0,20).map(a=>{const ms=memState(Math.round(a.rate));return `<tr class="click" onclick="renderWordDetail(${a.w.id})"><td class="ko" style="font-weight:700">${esc(a.w.ko)}</td><td style="color:var(--mute)">${esc(a.w.ja)}</td><td class="num ${ms.cls}">${Math.round(a.rate)}%</td></tr>`;}).join("");
-  return `<div class="curve-stats">
-      <div class="cstat"><div class="k">今日中に復習</div><div class="v ms-urgent">${today.length}語</div></div>
-      <div class="cstat"><div class="k">明日までに復習</div><div class="v ms-review">${tomorrow.length}語</div></div>
-      <div class="cstat"><div class="k">3日以内に復習</div><div class="v">${d3.length}語</div></div>
-    </div>
-    ${startBtn}
-    <div style="color:var(--faint);font-size:11px;margin:14px 0 6px">記憶率が70%を下回る見込みの単語（上位20）</div>
-    <table class="htab"><thead><tr><th>韓国語</th><th>日本語</th><th class="num">現在</th></tr></thead><tbody>${listRows||'<tr><td colspan="3" style="color:var(--mute);text-align:center;padding:20px">対象なし</td></tr>'}</tbody></table>`;
-}
 function startReviewTest(ids){curLevel="middle";curSection=1;startTest(ids);} // 復習予報は中級Section01(基本100語)ベース
 
-/* ============================================================ ROOM詳細（ホーム同デザインのピル＋テスト履歴＋単語一覧） ============================================================ */
+/* ============================================================ 単語一覧ページ（シンプル版） ============================================================ */
 function renderRoomMenu(){
   const ids=sectionIds(),st=loadStats(),now=Date.now(),nn=String(curSection).padStart(2,"0");
-  // 上部ピル（ホームのROOMメニューと同表記・同デザイン）
-  const ri=roomInfoFor(curSection);
-  const circ=(cls,rank)=>rank?`<div class="${cls}" style="background:${RANK_COLORS[rank]||"#555"}">${rank}</div>`:"";
-  const arr=ri.recent,rLast=arr[arr.length-1]||null,rPrev1=arr.length>=2?arr[arr.length-2]:null,rPrev2=arr.length>=3?arr[arr.length-3]:null;
-  const pill=`<div class="rm-scale" id="rm-scale"><div class="rm-inner">
-      <div class="rmenu-bg" style="cursor:default"></div>
-      <div class="hv-roomlabel" style="cursor:default">ROOM</div>
-      <div class="hv-roomno" style="cursor:default">${nn}</div>
-      <div class="hv-learned">${ri.learned}<span class="unit">語</span></div>
-      <div class="gauge hv-wordsg"><div class="gfill" style="background:#00FFFF;width:${Math.round(ri.learned/ri.total*100)}%"></div></div>
-      <div class="hv-roompwr">${ri.pwr}<span class="unit">%</span></div>
-      <div class="gauge hv-roomg"><div class="gfill" style="background:#00FF37;width:${ri.pwr}%"></div></div>
-      ${rPrev2?circ("rank-s",rPrev2):""}${rPrev1?circ("rank-s rank-s1",rPrev1):""}
-      ${rLast?circ("rank-b",rLast):`<div class="rank-b" style="background:rgba(0,0,0,.22)">-</div>`}
-  </div></div>`;
-  // テスト履歴（このROOMの単語を含むテストをtestId単位で集計）
-  const idSet=new Set(ids),byTest={};
-  loadHistory().forEach(r=>{if(r.testId&&idSet.has(r.wordId))(byTest[r.testId]=byTest[r.testId]||[]).push(r);});
-  const tests=Object.values(byTest).map(a=>({at:a[a.length-1].answeredAt,total:a.reduce((x,r)=>x+(r.score||0),0),n:a.length,ok:a.filter(r=>r.isCorrect).length}))
-    .sort((a,b)=>b.at.localeCompare(a.at)).slice(0,10);
-  const thist=tests.length?tests.map(t=>{
-    const full=t.n>=12,rk=full?rankFor(t.total):null,disp=t.total%1===0?t.total:t.total.toFixed(1);
-    return `<div class="th-row">
-      <span class="th-date">${fmtDate(t.at)}</span>
-      <span class="th-rank" style="background:${rk?(RANK_COLORS[rk]||"#555"):"rgba(0,0,0,.22)"}">${rk||"-"}</span>
-      <span class="th-score">${disp}</span>
-      <span style="color:#FF3B3B">○${t.ok}</span><span style="color:#2F6FE0">×${t.n-t.ok}</span></div>`;
-  }).join(""):'<div style="color:var(--faint);font-size:13px;font-weight:700">まだテスト履歴がありません</div>';
-  // 単語一覧
   const rows=ids.map(id=>{
     const w=WORD_BY_ID[id],x=st[id];
     if(x&&x.reviewCount>0){
@@ -1615,26 +1616,36 @@ function renderRoomMenu(){
   }).join("");
   document.getElementById("s-roommenu").innerHTML=`
    <div class="page">
-    <div class="page-head"><button class="back" onclick="show('s-home')">‹</button><h2>ROOM ${nn}</h2></div>
+    <div class="page-head"><button class="back" onclick="show('s-home')">‹</button><h2>ROOM ${nn} 単語一覧</h2></div>
     <div class="page-body">
-      ${pill}
-      <div class="tdetail-sec"><div class="h">テスト履歴</div>${thist}</div>
-      <div class="tdetail-sec"><div class="h">単語一覧</div>
-        <table class="htab"><thead><tr><th>韓国語</th><th>日本語</th><th class="num">回数</th><th class="num">記憶率</th></tr></thead><tbody>${rows}</tbody></table>
-      </div>
+      <table class="htab"><thead><tr><th>韓国語</th><th>日本語</th><th class="num">回数</th><th class="num">記憶率</th></tr></thead><tbody>${rows}</tbody></table>
     </div>
    </div>`;
   show("s-roommenu");
-  // ピルを画面幅に比例縮小
-  const sc=Math.min((Math.min(window.innerWidth,602)-32)/602,1);
-  const el=document.getElementById("rm-scale");
-  if(el){el.style.transform=`scale(${sc})`;el.style.height=Math.round(192*sc)+"px";}
+}
+
+/* ============================================================ ROOM限定の忘却曲線ページ ============================================================ */
+function renderRoomCurve(){
+  const now=Date.now(),nn=String(curSection).padStart(2,"0");
+  const words=sectionIds().map(id=>WORD_BY_ID[id]);
+  const st=loadStats();let t=0;words.forEach(w=>t+=displayScore(getStat(w.id,st),now));
+  const cond=Math.round(t/Math.max(1,words.length));
+  document.getElementById("s-curve").innerHTML=`
+   <div class="page">
+    <div class="page-head"><button class="back" onclick="show('s-home')">‹</button><h2>ROOM ${nn} 忘却曲線</h2></div>
+    <div class="cond"><div class="cond-k">記憶コンディション</div><div class="cond-v">${cond} <span>/ 100</span></div></div>
+    <div class="page-body">
+      ${curveOverall(now,words)}
+      <div class="tdetail-sec"><div class="h">単語別</div>${curveWords(now,words)}</div>
+    </div>
+   </div>`;
+  show("s-curve");
 }
 
 /* ============================================================ utils ============================================================ */
 function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
 /* バージョン表示（トップページ） */
-const APP_VERSION="v2.14.0 (2026-06-06)";
+const APP_VERSION="v2.15.0 (2026-06-06)";
 (function(){const el=document.getElementById("appver");if(el)el.textContent=APP_VERSION;})();
 getUserId();
 updateDiagnosis();   // 起動時に診断を初期化
