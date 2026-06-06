@@ -180,7 +180,7 @@ button{font-family:inherit}
 .home-head>*{pointer-events:auto}
 .slide-img,.room-ph{opacity:calc(1 - var(--p,0));transition:opacity .35s ease,transform .35s ease} /* 写真はフェードアウト */
 .home-wrap.dragging .slide-inner,.home-wrap.dragging .home-head,.home-wrap.dragging .slide-img,.home-wrap.dragging .room-ph{transition:none}
-.slide-list{position:absolute;left:24px;top:178px;width:554px;height:770px;overflow-y:auto;background:rgba(0,0,0,.35);scrollbar-width:none;
+.slide-list{position:absolute;left:24px;top:344px;width:554px;height:604px;overflow-y:auto;background:rgba(0,0,0,.35);scrollbar-width:none;
   opacity:var(--p,1);transition:opacity .35s ease} /* 入場はJSでフェードイン、下スワイプは--p連動でフェードアウト */
 .home-wrap.dragging .slide-list{transition:none}
 .slide-list::-webkit-scrollbar{display:none}
@@ -214,20 +214,17 @@ button{font-family:inherit}
 .axrow .axr{text-align:right}
 .axbar{flex:1;height:4px;background:rgba(0,0,0,.35);position:relative;border-radius:2px}
 .axdot{position:absolute;top:50%;transform:translateY(-50%);width:18px;height:18px;border-radius:50%;border:3px solid #fff;box-sizing:border-box;transition:left .5s ease}
-.room-panel{position:absolute;left:24px;top:192px;width:554px;height:486px;display:flex;gap:14px;z-index:3;background:rgba(0,0,0,.8);box-sizing:border-box} /* 黒80の下地が画像に被り、その上に3領域 */
-.rp-left{flex:1;background:transparent;padding:0;margin:0;display:flex;flex-direction:column;gap:2px;overflow:hidden}
-.th-row{flex:0 0 59px;box-sizing:border-box;display:flex;align-items:center;gap:12px;background:transparent;padding:0 10px;margin:0;font-size:28px;font-weight:900;cursor:pointer}
-.th-rank{width:50px;height:50px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:900;flex:0 0 auto}
-.th-score{width:76px;text-align:right}
-.rp-right{flex:1;display:flex;flex-direction:column;gap:14px}
-.rp-preview{flex:1;background:transparent;border:none;border-radius:0;color:#fff;font-family:inherit;cursor:pointer;padding:12px 14px;display:flex;flex-direction:column;text-align:left;overflow:hidden}
-.rp-preview:active{background:rgba(255,255,255,.08)}
-.pv-row{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:21px;font-weight:800;border-bottom:1px solid rgba(255,255,255,.15);padding:5px 0}
-.pv-ko{flex:0 0 auto}
-.pv-ja{color:rgba(255,255,255,.78);font-size:15px;flex:1;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.pv-more{margin-top:auto;text-align:right;font-size:22px;font-weight:900;padding-top:8px}
-.rp-btn{flex:0 0 58px;background:rgba(255,255,255,.15);color:#fff;border:none;border-radius:0;font-size:21px;font-weight:900;cursor:pointer;font-family:inherit}
-.rp-btn:active{background:rgba(255,255,255,.28)}
+.wl-mid{position:absolute;left:24px;top:178px;width:554px;height:150px;display:flex;gap:14px;
+  opacity:var(--p,1);transition:opacity .35s ease}
+.home-wrap.dragging .wl-mid{transition:none}
+.wl-pwrbtn{flex:0 0 calc(40% - 7px);background:rgba(0,0,0,.8);color:#fff;border:none;border-radius:0;
+  font-size:24px;font-weight:900;cursor:pointer;font-family:inherit}
+.wl-pwrbtn:active{background:rgba(0,0,0,.65)}
+.wl-hist{flex:1;background:rgba(0,0,0,.35);overflow:hidden}
+.wh-row{display:flex;align-items:center;gap:10px;height:50px;padding:0 12px;font-size:22px;font-weight:900;cursor:pointer;border-bottom:1px solid var(--line)}
+.wh-rank{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:23px;font-weight:900;flex:0 0 auto}
+.wh-score{width:54px;text-align:right}
+.wh-empty{color:rgba(255,255,255,.85);font-size:14px;font-weight:700;padding:12px}
 .rm-scale{transform-origin:top left;width:602px}
 .rm-inner{position:relative;width:602px;height:176px;margin-top:14px}
 .tdetail-sec{margin:16px 0}
@@ -592,8 +589,7 @@ function applyBgAll(bg){
 function applyHomeBg(){applyBgAll(roomBg(curSection));}
 
 /* ROOM選択：番号・パラメータ・ジオラマを1スライドにまとめ、丸ごと左右スワイプ */
-let _roomScrollT=null,_panelFor=null,_listMode=false;
-function toggleRoomPanel(n){_panelFor=_panelFor===n?null:n;buildRoomSlides();}
+let _roomScrollT=null,_listMode=false;
 /* 単語一覧モード：ROOMメニューが上へスライドし、下に単語一覧。横スワイプで隣のROOMの一覧へ */
 const LIFT_MAX=210; // ROOMメニューが最上部に達するまでの移動量
 function setLift(px){ // ピル上昇量(px)とヘッダー/写真用の進捗(--p)を同時に設定
@@ -603,12 +599,11 @@ function setLift(px){ // ピル上昇量(px)とヘッダー/写真用の進捗(-
 }
 function enterListMode(){
   if(_listMode)return;
-  _panelFor=null;
   setLift(-LIFT_MAX); // ROOMメニューが最上部へ・ヘッダー退場・写真フェード
   setTimeout(()=>{
     _listMode=true;buildRoomSlides();
     // 表全体をフェードイン（強制リフローでtransitionを確実に発火）
-    const ls=document.querySelectorAll(".slide-list");
+    const ls=document.querySelectorAll(".slide-list,.wl-mid");
     ls.forEach(e=>e.style.opacity="0");
     void document.body.offsetHeight;
     ls.forEach(e=>e.style.opacity="");
@@ -618,7 +613,26 @@ function exitListMode(){
   setLift(0);
   setTimeout(()=>{_listMode=false;buildRoomSlides();},360);
 }
-function roomMenuTap(n){if(_listMode)exitListMode();else toggleRoomPanel(n);}
+function roomMenuTap(n){_listMode?exitListMode():enterListMode();} // 押下=上スワイプと同じ
+/* 一覧モード: ROOMメニュー下・単語表上の帯（左40%=PWRメータボタン / 右60%=テスト履歴3件） */
+function roomMidHTML(n){
+  const ids=new Set(LEVEL_SECTIONS[curLevel][n]||[]),byTest={};
+  loadHistory().forEach(r=>{if(r.testId&&ids.has(r.wordId))(byTest[r.testId]=byTest[r.testId]||[]).push(r);});
+  const tests=Object.entries(byTest).map(([tid,a])=>({tid,at:a[a.length-1].answeredAt,total:a.reduce((x,r)=>x+(r.score||0),0),n:a.length,ok:a.filter(r=>r.isCorrect).length}))
+    .sort((a,b)=>b.at.localeCompare(a.at)).slice(0,3);
+  const rows=tests.length?tests.map(t=>{
+    const full=t.n>=12,tt=Math.ceil(t.total),rk=full?rankFor(tt):null;
+    return `<div class="wh-row" onclick="renderPastResult('${t.tid}')">
+      <span class="wh-rank" style="background:${rk?(RANK_COLORS[rk]||"#555"):"rgba(0,0,0,.22)"}">${rk||"-"}</span>
+      <span class="wh-score">${tt}</span>
+      <span style="color:#FF3B3B">○${t.ok}</span><span style="color:#2F6FE0">×${t.n-t.ok}</span></div>`;
+  }).join(""):'<div class="wh-empty">まだテスト履歴がありません</div>';
+  return `<div class="wl-mid">
+    <button class="wl-pwrbtn" onclick="renderRoomCurve()">PWRメータ</button>
+    <div class="wl-hist">${rows}</div>
+  </div>`;
+}
+
 /* スライド内の単語一覧 */
 function roomListHTML(n){
   const ids=LEVEL_SECTIONS[curLevel][n]||[],st=loadStats(),now=Date.now();
@@ -633,30 +647,6 @@ function roomListHTML(n){
   return `<div class="slide-list">
     <div class="wl-head"><span class="wl-no">No.</span><span class="wl-ko">韓国語</span><span class="wl-ja">日本語</span><span class="wl-cnt">回数</span><span class="wl-rate">記憶率</span></div>
     ${rows}</div>`;
-}
-/* ROOMボード：ROOMメニュータップでジオラマと入れ替わる領域。
-   左=テスト履歴(大きめ表示・最大8件) / 右=単語帳プレビュー(タップで一覧へ)・ROOM PWRメータ */
-function roomPanelHTML(n){
-  const idsArr=LEVEL_SECTIONS[curLevel][n]||[],ids=new Set(idsArr),byTest={};
-  loadHistory().forEach(r=>{if(r.testId&&ids.has(r.wordId))(byTest[r.testId]=byTest[r.testId]||[]).push(r);});
-  const tests=Object.entries(byTest).map(([tid,a])=>({tid,at:a[a.length-1].answeredAt,total:a.reduce((x,r)=>x+(r.score||0),0),n:a.length,ok:a.filter(r=>r.isCorrect).length}))
-    .sort((a,b)=>b.at.localeCompare(a.at)).slice(0,8); // 8件で486pxにぴったり収まる
-  const rowsH=tests.length?tests.map(t=>{
-    const full=t.n>=12,tt=Math.ceil(t.total),rk=full?rankFor(tt):null,disp=tt;
-    return `<div class="th-row" onclick="renderPastResult('${t.tid}')">
-      <span class="th-rank" style="background:${rk?(RANK_COLORS[rk]||"#555"):"rgba(0,0,0,.22)"}">${rk||"-"}</span>
-      <span class="th-score">${disp}</span>
-      <span style="color:#FF3B3B">○${t.ok}</span><span style="color:#2F6FE0">×${t.n-t.ok}</span></div>`;
-  }).join(""):'<div style="color:rgba(255,255,255,.85);font-size:18px;font-weight:800;padding:8px 2px">まだテスト履歴が<br>ありません</div>';
-  const pv=idsArr.slice(0,5).map(id=>{const w=WORD_BY_ID[id];
-    return `<div class="pv-row"><span class="pv-ko">${esc(w.ko)}</span><span class="pv-ja">${esc(w.ja)}</span></div>`;}).join("");
-  return `<div class="room-panel">
-    <div class="rp-left">${rowsH}</div>
-    <div class="rp-right">
-      <button class="rp-preview" onclick="enterListMode()">${pv}<div class="pv-more">単語一覧 ›</div></button>
-      <button class="rp-btn" onclick="renderRoomCurve()">PWRメータ</button>
-    </div>
-  </div>`;
 }
 function roomInfoFor(n){
   const ids=LEVEL_SECTIONS[curLevel][n]||[],s=loadStats(),now=Date.now();
@@ -700,11 +690,10 @@ function buildRoomSlides(){
       ${rPrev2?circ("rank-s",rPrev2):""}
       ${rPrev1?circ("rank-s rank-s1",rPrev1):""}
       ${big}
-      ${_listMode?roomListHTML(n):`<div class="room-ph">${nn}</div>
+      ${_listMode?(roomMidHTML(n)+roomListHTML(n)):`<div class="room-ph">${nn}</div>
       <img class="slide-img" src="rooms/${curLevel}-${nn}.webp" alt="" loading="lazy"
         onload="this.previousElementSibling.style.display='none'"
-        onerror="this.style.display='none'">
-      ${_panelFor===n?roomPanelHTML(n):""}`}
+        onerror="this.style.display='none'">`}
       </div>
     </div>`;
   }).join("");
@@ -1788,7 +1777,7 @@ function renderRoomCurve(){
 /* ============================================================ utils ============================================================ */
 function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
 /* バージョン表示（トップページ） */
-const APP_VERSION="v2.18.2 (2026-06-07)";
+const APP_VERSION="v2.19.0 (2026-06-07)";
 (function(){const el=document.getElementById("appver");if(el)el.textContent=APP_VERSION;})();
 getUserId();
 updateDiagnosis();   // 起動時に診断を初期化
