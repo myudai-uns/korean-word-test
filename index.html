@@ -174,8 +174,13 @@ button{font-family:inherit}
 .lv-pick .lv-cap{text-align:center;font-size:22px;color:rgba(255,255,255,.85);letter-spacing:2px}
 .slide-img{position:absolute;left:24px;top:178px;width:554px;height:507px;object-fit:contain}
 .room-ph{position:absolute;left:24px;top:178px;width:554px;height:507px;display:flex;align-items:center;justify-content:center;font-size:130px;color:rgba(255,255,255,.32);font-weight:800}
-.start-button{position:absolute;left:50%;transform:translateX(-50%);top:1004px;width:540px;height:123px;border:none;border-radius:62px;
-  background:rgba(0,0,0,.8);color:#FFFFFF;font-size:62px;font-weight:900;cursor:pointer;font-family:inherit;z-index:2}
+.start-button{position:absolute;left:50%;transform:translateX(-50%);top:1004px;width:540px;height:123px;border:4px solid #FFC400;border-radius:62px;
+  background:rgba(0,0,0,.8);color:#FFFFFF;font-size:62px;font-weight:900;cursor:pointer;font-family:inherit;z-index:2;
+  animation:glowpulse 1.8s ease-in-out infinite}
+@keyframes glowpulse{
+  0%,100%{box-shadow:0 0 6px 2px rgba(255,196,0,.45);border-color:#FFC400}
+  50%{box-shadow:0 0 24px 8px rgba(255,196,0,.9);border-color:#FFE066}
+}
 .start-button:active{background:rgba(0,0,0,.65)}
 .hv-ver{position:absolute;left:0;right:0;bottom:8px;text-align:center;font-size:11px;color:rgba(255,255,255,.5);z-index:2}
 .typebox{text-align:center;cursor:pointer;padding:2px 0}
@@ -189,7 +194,7 @@ button{font-family:inherit}
 .axrow .axr{text-align:right}
 .axbar{flex:1;height:4px;background:rgba(0,0,0,.35);position:relative;border-radius:2px}
 .axdot{position:absolute;top:50%;transform:translateY(-50%);width:18px;height:18px;border-radius:50%;border:3px solid #fff;box-sizing:border-box;transition:left .5s ease}
-.room-panel{position:absolute;left:24px;top:192px;width:554px;height:486px;display:flex;gap:14px}
+.room-panel{position:absolute;left:24px;top:192px;width:554px;height:486px;display:flex;gap:14px;z-index:3} /* 画像の上に重ねる */
 .rp-left{flex:1;background:transparent;padding:0;margin:0;overflow-y:auto;scrollbar-width:none}
 .rp-left::-webkit-scrollbar{display:none}
 .th-row{display:flex;align-items:center;gap:12px;background:rgba(0,0,0,.55);padding:5px 10px;margin-bottom:8px;font-size:28px;font-weight:900;cursor:pointer}
@@ -630,10 +635,11 @@ function buildRoomSlides(){
       ${rPrev2?circ("rank-s",rPrev2):""}
       ${rPrev1?circ("rank-s rank-s1",rPrev1):""}
       ${big}
-      ${_panelFor===n?roomPanelHTML(n):`<div class="room-ph">${nn}</div>
+      <div class="room-ph">${nn}</div>
       <img class="slide-img" src="rooms/${curLevel}-${nn}.webp" alt="" loading="lazy"
         onload="this.previousElementSibling.style.display='none'"
-        onerror="this.style.display='none'">`}
+        onerror="this.style.display='none'">
+      ${_panelFor===n?roomPanelHTML(n):""}
       </div>
     </div>`;
   }).join("");
@@ -1703,7 +1709,7 @@ function renderRoomCurve(){
 /* ============================================================ utils ============================================================ */
 function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
 /* バージョン表示（トップページ） */
-const APP_VERSION="v2.16.4 (2026-06-06)";
+const APP_VERSION="v2.16.5 (2026-06-06)";
 (function(){const el=document.getElementById("appver");if(el)el.textContent=APP_VERSION;})();
 getUserId();
 updateDiagnosis();   // 起動時に診断を初期化
