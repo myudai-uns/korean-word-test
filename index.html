@@ -185,8 +185,8 @@ button{font-family:inherit}
 .axrow{display:flex;align-items:center;gap:8px;margin:10px 0;font-size:11px;font-weight:700;color:var(--mute)}
 .axrow .axl,.axrow .axr{flex:0 0 84px}
 .axrow .axr{text-align:right}
-.axbar{flex:1;height:8px;background:var(--gray);overflow:hidden}
-.axfill{height:100%;transition:width .6s ease}
+.axbar{flex:1;height:4px;background:rgba(0,0,0,.35);position:relative;border-radius:2px}
+.axdot{position:absolute;top:50%;transform:translateY(-50%);width:18px;height:18px;border-radius:50%;border:3px solid #fff;box-sizing:border-box;transition:left .5s ease}
 .tdetail-sec{margin:16px 0}
 .tdetail-sec .h{color:var(--mute);font-size:11px;font-weight:800;letter-spacing:2px;margin-bottom:6px}
 .tdetail-sec .item{font-size:13px;line-height:1.9}
@@ -828,10 +828,12 @@ function renderTypeDetail(){
   const d=computeDiagnosis();
   const any=d.axes.some(a=>a.code);
   const bars=AXES.map((ax,i)=>{
-    const a=d.axes[i],t=Math.round(a.score==null?50:a.score),col=axisColor(ax,a);
-    return `<div class="axrow"><span class="axl">${ax.ln} ${ax.L}</span>
-      <div class="axbar"><div class="axfill" style="width:${t}%;background:${col}"></div></div>
-      <span class="axr">${ax.R} ${ax.rn}</span></div>`;
+    const a=d.axes[i],t=Math.round(a.score==null?50:a.score); // t=左寄り度(0-100)
+    const domLeft=t>=50,col=AXIS_COLORS[domLeft?ax.L:ax.R];
+    const pos=100-t; // 左寄りほど点が左へ
+    return `<div class="axrow"><span class="axl"${domLeft?` style="color:${col}"`:""}>${ax.ln} ${ax.L}</span>
+      <div class="axbar"><div class="axdot" style="left:calc(${pos}% - 9px);background:${col}"></div></div>
+      <span class="axr"${!domLeft?` style="color:${col}"`:""}>${ax.R} ${ax.rn}</span></div>`;
   }).join("");
   // タイプの特徴文（未確定軸がある間は近いタイプとして表示）
   const baseCode=d.code.replace(/\?/g,"");
@@ -1599,7 +1601,7 @@ function renderRoomMenu(){
 /* ============================================================ utils ============================================================ */
 function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
 /* バージョン表示（トップページ） */
-const APP_VERSION="v2.11.1 (2026-06-06)";
+const APP_VERSION="v2.11.2 (2026-06-06)";
 (function(){const el=document.getElementById("appver");if(el)el.textContent=APP_VERSION;})();
 getUserId();
 updateDiagnosis();   // 起動時に診断を初期化
