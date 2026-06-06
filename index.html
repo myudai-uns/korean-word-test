@@ -111,6 +111,14 @@ button{font-family:inherit}
 .home{position:relative}
 .cond-top{position:absolute;top:18px;left:22px;right:22px;text-align:center;color:var(--mute);font-size:12px;font-weight:700;letter-spacing:1px}
 .cond-top b{color:var(--text);font-size:15px}
+/* 右上：曲線/履歴の正方形ボタン（縦並び） */
+.corner-btns{position:absolute;top:48px;right:18px;display:flex;flex-direction:column;gap:8px}
+.sqbtn{width:54px;height:54px;background:var(--gray);border:1px solid var(--line);color:var(--text);font-size:12px;font-weight:700;cursor:pointer}
+.sqbtn:active{background:var(--gray-h)}
+/* 中央下：テスト開始（黄色・大） */
+.btn.start{position:absolute;left:22px;right:22px;bottom:88px;width:auto;background:var(--gold);color:#1a1405;border:none;font-size:19px;font-weight:900;padding:20px}
+.btn.start:active{background:#e6b22f}
+.home .ver{position:absolute;left:0;right:0;bottom:30px;margin-top:0}
 .typebox{text-align:center;cursor:pointer;padding:2px 0}
 .t-code{font-size:42px;font-weight:900;letter-spacing:9px;text-indent:9px}
 .t-char{display:block;margin:14px auto 0;width:116px;height:116px}
@@ -211,13 +219,15 @@ button{font-family:inherit}
   <div class="screen on" id="s-home">
     <div class="home">
       <div class="cond-top" id="homecond"></div>
+      <div class="corner-btns">
+        <button class="sqbtn" onclick="renderCurve()">曲線</button>
+        <button class="sqbtn" onclick="renderHistory()">履歴</button>
+      </div>
       <div class="typebox" onclick="renderTypeDetail()">
         <div class="t-code" id="t-code">分析中</div>
         <img class="t-char" id="t-char" src="characters/analyzing.svg" alt="">
       </div>
-      <button class="btn primary" onclick="show('s-level')">テストを始める</button>
-      <button class="btn ghost" onclick="renderCurve()">忘却曲線を見る</button>
-      <button class="btn ghost" onclick="renderHistory()">学習履歴を見る</button>
+      <button class="btn start" onclick="show('s-level')">テストを始める</button>
       <div class="ver" id="appver"></div>
     </div>
   </div>
@@ -1377,7 +1387,7 @@ function startSectionTest(n){curSection=n;startTest();}
 /* ============================================================ utils ============================================================ */
 function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
 /* バージョン表示（トップページ） */
-const APP_VERSION="v2.2.0 (2026-06-06)";
+const APP_VERSION="v2.2.1 (2026-06-06)";
 (function(){const el=document.getElementById("appver");if(el)el.textContent=APP_VERSION;})();
 getUserId();
 updateDiagnosis();   // 起動時に診断・外枠色・ホーム表示を初期化
