@@ -123,21 +123,22 @@ button{font-family:inherit}
 /* バー：暗いトラック＋内側に角丸フィル（見本準拠） */
 .home-wrap .gauge{position:absolute;background:#333333;border-radius:999px;padding:3px;box-sizing:border-box;z-index:2}
 .home-wrap .gfill{height:100%;border-radius:999px;transition:width .5s ease;width:0}
-.avatar-circle{position:absolute;left:32px;top:35px;width:120px;height:120px;border-radius:50%;background:#5D433A;overflow:hidden;cursor:pointer;z-index:2}
+/* ヘッダー（見本HOME.pngの実測値: アバター37,76 128px / パネル166,119 403x63 / ドット22px / トラック178px） */
+.avatar-circle{position:absolute;left:37px;top:76px;width:128px;height:128px;border-radius:50%;background:#5D433A;overflow:hidden;cursor:pointer;z-index:2}
 .avatar-image{width:100%;height:100%;object-fit:contain;padding:14px;box-sizing:border-box}
-.hv-level{position:absolute;left:172px;top:30px;display:flex;align-items:baseline;gap:3px;line-height:1;z-index:2;font-size:25px}
-.hv-level span{font-size:48px}
-.type-dots{position:absolute;right:172px;top:48px;display:flex;gap:8px;z-index:2}
-.type-dot{width:32px;height:32px;border-radius:50%}
-.hv-code{position:absolute;right:16px;top:37px;font-size:46px;letter-spacing:1px;line-height:1;cursor:pointer;z-index:2}
-.status-panel{position:absolute;left:163px;top:80px;width:423px;height:100px;border-radius:50px;background:#5D433A;z-index:1}
-.hv-lab{position:absolute;font-size:22px;line-height:1.2;z-index:2}
-.hv-xplabel{left:180px;top:90px;width:78px;text-align:right}
-.hv-xpg{left:269px;top:91px;width:183px;height:22px}
-.hv-xpval{left:460px;top:90px}
-.hv-pwrlabel{left:180px;top:122px;width:78px;text-align:right}
-.hv-pwrg{left:269px;top:123px;width:183px;height:22px}
-.hv-pwrval{left:460px;top:122px}
+.hv-level{position:absolute;left:176px;top:80px;display:flex;align-items:baseline;gap:3px;line-height:1;z-index:2;font-size:20px}
+.hv-level span{font-size:38px}
+.type-dots{position:absolute;left:318px;top:87px;display:flex;gap:6px;z-index:2}
+.type-dot{width:22px;height:22px;border-radius:50%}
+.hv-code{position:absolute;right:47px;top:78px;font-size:40px;letter-spacing:1px;line-height:1;cursor:pointer;z-index:2}
+.status-panel{position:absolute;left:166px;top:119px;width:403px;height:64px;border-radius:32px;background:#5D433A;z-index:1}
+.hv-lab{position:absolute;font-size:18px;line-height:19px;z-index:2}
+.hv-xplabel{left:175px;top:128px;width:80px;text-align:right}
+.hv-xpg{left:263px;top:128px;width:178px;height:19px}
+.hv-xpval{left:450px;top:128px}
+.hv-pwrlabel{left:175px;top:156px;width:80px;text-align:right}
+.hv-pwrg{left:263px;top:156px;width:178px;height:19px}
+.hv-pwrval{left:450px;top:156px}
 /* ROOM選択：ROOM情報＋ジオラマを丸ごと左右スワイプ（番号やパラメータも一緒にスクロール）。
    コンテナは全幅＝画像は画面の端で見切れる */
 .room-scroll{position:absolute;left:0;top:240px;width:602px;height:686px;display:flex;overflow-x:auto;overflow-y:hidden;
@@ -1533,7 +1534,7 @@ function startSectionTest(n){curSection=n;show("s-home");} // ROOM切替：ホ�
 /* ============================================================ utils ============================================================ */
 function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
 /* バージョン表示（トップページ） */
-const APP_VERSION="v2.5.0 (2026-06-06)";
+const APP_VERSION="v2.5.1 (2026-06-06)";
 (function(){const el=document.getElementById("appver");if(el)el.textContent=APP_VERSION;})();
 getUserId();
 updateDiagnosis();   // 起動時に診断を初期化
