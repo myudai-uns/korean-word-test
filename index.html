@@ -105,22 +105,18 @@ button{font-family:inherit}
 .home .sub{color:var(--mute);font-size:14px;text-align:center;line-height:1.7;margin:-4px 0 18px}
 .home .ver{color:var(--faint);font-size:11px;font-weight:700;text-align:center;letter-spacing:1px;margin-top:14px}
 
-/* ===== タイプ診断（V2: ホーム統合・引き算のデザイン） ===== */
+/* ===== タイプ診断（V2.1: コード＋キャラクターのみの引き算デザイン） ===== */
+.home{position:relative}
+.cond-top{position:absolute;top:18px;left:22px;right:22px;text-align:center;color:var(--mute);font-size:12px;font-weight:700;letter-spacing:1px}
+.cond-top b{color:var(--text);font-size:15px}
 .typebox{text-align:center;cursor:pointer;padding:2px 0}
-.t-label{color:var(--mute);font-size:11px;letter-spacing:3px;font-weight:800}
-.t-code{font-size:34px;font-weight:900;letter-spacing:6px;margin-top:4px}
-.t-name{font-size:14px;font-weight:800;margin-top:2px}
-.t-desc{color:var(--mute);font-size:12px;line-height:1.7;margin-top:6px;font-weight:600}
-.t-char{display:block;margin:10px auto 0;width:104px;height:104px}
-.homestat{background:var(--panel);border:1px solid var(--line);padding:10px 12px;text-align:center;color:var(--mute);font-size:12.5px;font-weight:700;line-height:1.6}
-.homestat b{color:var(--text)}
-/* 4軸タイプカラー外枠：細く・コンテンツを狭めない・四隅45°・色はフェードで変化 */
-.tframe{position:fixed;top:0;left:50%;transform:translateX(-50%);width:100%;max-width:520px;height:100dvh;pointer-events:none;z-index:250}
-.tf{position:absolute;background:#26282d;transition:background-color .6s ease}
-.tf-top{top:0;left:0;right:0;height:3px;clip-path:polygon(0 0,100% 0,calc(100% - 3px) 100%,3px 100%)}
-.tf-bottom{bottom:0;left:0;right:0;height:3px;clip-path:polygon(3px 0,calc(100% - 3px) 0,100% 100%,0 100%)}
-.tf-left{top:0;bottom:0;left:0;width:3px;clip-path:polygon(0 0,100% 3px,100% calc(100% - 3px),0 100%)}
-.tf-right{top:0;bottom:0;right:0;width:3px;clip-path:polygon(0 3px,100% 0,100% 100%,0 calc(100% - 3px))}
+.t-code{font-size:42px;font-weight:900;letter-spacing:9px;text-indent:9px}
+.t-char{display:block;margin:14px auto 0;width:116px;height:116px}
+/* 4軸タイプカラー外枠：9px（従来の3倍）・border方式で四隅45°接続・角丸でスマホの縁を象る・フェードで変化 */
+.tframe{position:fixed;top:0;left:50%;transform:translateX(-50%);width:100%;max-width:520px;height:100dvh;
+  pointer-events:none;z-index:250;box-sizing:border-box;
+  border:9px solid #26282d;border-radius:30px;
+  transition:border-top-color .6s ease,border-right-color .6s ease,border-bottom-color .6s ease,border-left-color .6s ease}
 /* タイプ詳細 */
 .axrow{display:flex;align-items:center;gap:8px;margin:10px 0;font-size:11px;font-weight:700;color:var(--mute)}
 .axrow .axl,.axrow .axr{flex:0 0 84px}
@@ -216,16 +212,12 @@ button{font-family:inherit}
   <!-- HOME -->
   <div class="screen on" id="s-home">
     <div class="home">
+      <div class="cond-top" id="homecond"></div>
       <div class="typebox" onclick="renderTypeDetail()">
-        <div class="t-label">YOUR WORD TYPE</div>
         <div class="t-code" id="t-code">分析中</div>
-        <div class="t-name" id="t-name"></div>
-        <div class="t-desc" id="t-desc">問題を解くと、<br>あなたの学習傾向が見えてきます</div>
         <img class="t-char" id="t-char" src="characters/analyzing.svg" alt="">
       </div>
       <button class="btn primary" onclick="show('s-level')">テストを始める</button>
-      <div class="homestat" id="homeprog2"></div>
-      <div class="homestat" id="homecond"></div>
       <button class="btn ghost" onclick="renderCurve()">忘却曲線を見る</button>
       <button class="btn ghost" onclick="renderHistory()">学習履歴を見る</button>
       <div class="ver" id="appver"></div>
@@ -265,13 +257,8 @@ button{font-family:inherit}
   <div class="screen" id="s-type"></div>
 </div>
 
-<!-- 4軸タイプカラー外枠（上=軸1/右=軸2/下=軸3/左=軸4、四隅は45°接続） -->
-<div class="tframe" aria-hidden="true">
-  <div class="tf tf-top" id="tf-top"></div>
-  <div class="tf tf-right" id="tf-right"></div>
-  <div class="tf tf-bottom" id="tf-bottom"></div>
-  <div class="tf tf-left" id="tf-left"></div>
-</div>
+<!-- 4軸タイプカラー外枠（上=軸1/右=軸2/下=軸3/左=軸4。border方式＝四隅45°接続＋スマホ風の角丸） -->
+<div class="tframe" id="tframe" aria-hidden="true"></div>
 
 <script src="words-middle.js"></script>
 <script src="words-beginner.js"></script>
@@ -575,8 +562,10 @@ function lerpHex(h1,h2,t){
 function axisColor(ax,axis){return lerpHex(AXIS_COLORS[ax.R],AXIS_COLORS[ax.L],(axis.score==null?50:axis.score)/100);}
 function frameColors(d){const o={};AXES.forEach((ax,i)=>o[ax.side]=axisColor(ax,d.axes[i]));return o;}
 function applyFrameColors(d){
-  const fc=frameColors(d);
-  ["top","right","bottom","left"].forEach(s=>{const el=document.getElementById("tf-"+s);if(el)el.style.backgroundColor=fc[s];});
+  const fc=frameColors(d),el=document.getElementById("tframe");
+  if(!el)return;
+  el.style.borderTopColor=fc.top;el.style.borderRightColor=fc.right;
+  el.style.borderBottomColor=fc.bottom;el.style.borderLeftColor=fc.left;
 }
 
 /* --- 診断結果の保存（上書きせず履歴として追記） --- */
@@ -617,78 +606,44 @@ function nextHint(d){
   if(d.n<300)return`あと${300-d.n}問で「詳細タイプ」になります`;
   return"";
 }
+/* ホームは4文字コード＋キャラクターのみ（ラベル・解説文なし） */
 function refreshHomeType(d){
   d=d||computeDiagnosis();
-  const c=document.getElementById("t-code"),nm=document.getElementById("t-name"),ds=document.getElementById("t-desc"),img=document.getElementById("t-char");
+  const c=document.getElementById("t-code"),img=document.getElementById("t-char");
   if(!c)return;
-  if(d.complete){
-    const ti=TYPE_INFO[d.code]||["",""];
-    c.textContent=d.code;nm.textContent=ti[0];
-    ds.innerHTML=esc(ti[1])+`<br><span style="color:var(--faint)">${CONF_JA[d.confidence]}</span>`;
-  }else if(d.n<30){
-    c.textContent="分析中";nm.textContent="";
-    ds.innerHTML="問題を解くと、<br>あなたの学習傾向が見えてきます";
-  }else{
-    c.textContent=d.code.split("").join(" ");nm.textContent="";
-    ds.textContent=nextHint(d);
-  }
+  if(d.complete)c.textContent=d.code;
+  else if(d.n<30)c.textContent="分析中";
+  else c.textContent=d.code;
+  c.style.fontSize=d.complete||d.n>=30?"":"26px";
   if(img)img.src=charPathFor(d);
 }
 function refreshHomeStats(){
-  const p=loadProgress(),pool=sectionIds(),served=(p.served||[]).length;
-  const pr=document.getElementById("homeprog2");
-  if(pr)pr.innerHTML=`現在の周回 <b>${p.cycleNumber||1}</b>　出題済み：<b>${served}</b> / ${pool.length}語　残り：<b>${pool.length-served}</b>語`;
   const cd=document.getElementById("homecond");
   if(cd)cd.innerHTML=`記憶コンディション <b>${Math.round(overallCondition(Date.now()))}</b> / 100`;
 }
 
-/* --- タイプ詳細画面 --- */
+/* --- タイプ詳細画面（コード＋キャラクター＋4軸＋よくある間違いのみ） --- */
 function renderTypeDetail(){
   const d=computeDiagnosis(),win=diagWindow();
-  const ti=d.complete?(TYPE_INFO[d.code]||["",""]):null;
   const bars=AXES.map((ax,i)=>{
     const a=d.axes[i],t=Math.round(a.score==null?50:a.score),col=axisColor(ax,a);
     return `<div class="axrow"><span class="axl">${ax.ln} ${ax.L}</span>
       <div class="axbar"><div class="axfill" style="width:${t}%;background:${col}"></div></div>
-      <span class="axr">${ax.R} ${ax.rn}${a.code?"":"<br>（分析中）"}</span></div>`;
+      <span class="axr">${ax.R} ${ax.rn}</span></div>`;
   }).join("");
   const mist=win.filter(x=>x.r.answerStatus==="incorrect"&&x.r.userAnswer).slice(-3).reverse()
     .map(x=>`<div class="item">${esc(x.r.korean)}（${esc(x.r.japanese)}）→ <span class="ms-urgent">${esc(x.r.userAnswer)}</span></div>`).join("")
     ||'<div class="item" style="color:var(--mute)">まだ誤答履歴がありません</div>';
-  const tagCnt={};
-  win.forEach(x=>{
-    if(!x.r.isCorrect&&x.r.distractorType)tagCnt[DTAG_JA[x.r.distractorType]||x.r.distractorType]=(tagCnt[DTAG_JA[x.r.distractorType]||x.r.distractorType]||0)+1;
-    if(x.r.writingErrorType&&x.r.writingErrorType!=="unclassified"){const k=WERR_JA[x.r.writingErrorType];tagCnt[k]=(tagCnt[k]||0)+1;}
-    if(x.r.writingErrorDetail){const k=WDET_JA[x.r.writingErrorDetail];tagCnt[k]=(tagCnt[k]||0)+1;}
-  });
-  const weak=Object.entries(tagCnt).sort((a,b)=>b[1]-a[1]).slice(0,3)
-    .map(([k,v])=>`<div class="item">${esc(k)}　<span style="color:var(--mute)">${v}件</span></div>`).join("")
-    ||'<div class="item" style="color:var(--mute)">まだ十分な履歴がありません</div>';
-  const recs=d.axes.filter(a=>a.code).map(a=>`<div class="item">・${esc(RECOMMEND[a.code])}</div>`).join("")
-    ||'<div class="item" style="color:var(--mute)">軸が判定されると表示されます</div>';
-  const histRows=loadDiag().slice(-5).reverse()
-    .map(h=>`<div class="item">${esc(h.diagnosisCode)}　<span style="color:var(--mute)">${esc((h.calculatedAt||"").slice(0,10))}・${CONF_JA[h.confidenceLevel]||""}</span></div>`).join("")
-    ||'<div class="item" style="color:var(--mute)">履歴なし</div>';
-  const raw=d.axes.map((a,i)=>`<div class="item">軸${i+1}：score=${a.score==null?"—":Math.round(a.score)}　対象=${a.n}件${a.provisional?"（仮判定）":""}</div>`).join("");
   document.getElementById("s-type").innerHTML=`
    <div class="page">
     <div class="page-head"><button class="back" onclick="show('s-home')">‹</button><h2>タイプ詳細</h2></div>
     <div class="page-body">
       <div class="typebox" style="cursor:default">
-        <div class="t-label">YOUR WORD TYPE</div>
-        <div class="t-code">${d.complete?d.code:(d.n<30?"分析中":d.code.split("").join(" "))}</div>
-        <div class="t-name">${ti?esc(ti[0]):""}</div>
+        <div class="t-code">${d.complete?d.code:(d.n<30?"分析中":d.code)}</div>
         <img class="t-char" src="${charPathFor(d)}" alt="">
-        <div class="t-desc">${ti?esc(ti[1]):esc(nextHint(d)||"問題を解くと、あなたの学習傾向が見えてきます")}<br><span style="color:var(--faint)">${CONF_JA[d.confidence]}・有効履歴 ${d.n}件</span></div>
       </div>
-      <div class="tdetail-sec"><div class="h">4つの軸</div>${bars}</div>
+      <div class="tdetail-sec" style="margin-top:24px">${bars}</div>
       <div class="tdetail-sec"><div class="h">よくある間違い</div>${mist}</div>
-      <div class="tdetail-sec"><div class="h">苦手傾向</div>${weak}</div>
-      <div class="tdetail-sec"><div class="h">おすすめ学習</div>${recs}</div>
-      <div class="tdetail-sec"><div class="h">タイプ履歴</div>${histRows}</div>
-      <div class="tdetail-sec"><div class="h">次の分析更新</div><div class="item">${esc(nextHint(d)||"分析は最新の状態です")}</div></div>
-      <button class="btn line" onclick="const e=document.getElementById('t-raw');e.classList.toggle('hidden')">詳細を見る</button>
-      <div id="t-raw" class="tdetail-sec hidden"><div class="h">計算値</div>${raw}</div>
     </div>
    </div>`;
   show("s-type");
@@ -1419,7 +1374,7 @@ function startSectionTest(n){curSection=n;startTest();}
 /* ============================================================ utils ============================================================ */
 function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
 /* バージョン表示（トップページ） */
-const APP_VERSION="v2.0.0 (2026-06-06)";
+const APP_VERSION="v2.1.0 (2026-06-06)";
 (function(){const el=document.getElementById("appver");if(el)el.textContent=APP_VERSION;})();
 getUserId();
 updateDiagnosis();   // 起動時に診断・外枠色・ホーム表示を初期化
