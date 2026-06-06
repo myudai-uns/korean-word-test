@@ -152,7 +152,7 @@ button{font-family:inherit}
 .slide-inner{position:absolute;left:0;top:255px;width:602px;height:686px}
 /* ROOMパラメータ（ラベル/番号・語数/バー/%の間に余白。ランクD,B=36px・A=98pxで下端揃え） */
 .rmenu-bg{position:absolute;left:40px;top:-12px;width:522px;height:174px;background:rgba(255,255,255,.15);border-radius:999px;cursor:pointer}
-.hv-roomlabel{position:absolute;left:83px;top:0;font-size:36px;letter-spacing:2px;line-height:1;cursor:pointer}
+.hv-roomlabel{position:absolute;left:83px;top:3px;font-size:32px;letter-spacing:.5px;line-height:1;cursor:pointer}
 .hv-roomno{position:absolute;left:72px;top:42px;font-size:108px;line-height:1;cursor:pointer}
 .hv-learned{position:absolute;left:244px;top:10px;font-size:40px;line-height:1;color:#FFFFFF}
 .hv-roompwr{position:absolute;left:244px;top:76px;font-size:48px;line-height:1;color:#FFFFFF}
@@ -1619,7 +1619,7 @@ function renderRoomMenu(){
 /* ============================================================ utils ============================================================ */
 function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
 /* バージョン表示（トップページ） */
-const APP_VERSION="v2.12.4 (2026-06-06)";
+const APP_VERSION="v2.12.5 (2026-06-06)";
 (function(){const el=document.getElementById("appver");if(el)el.textContent=APP_VERSION;})();
 getUserId();
 updateDiagnosis();   // 起動時に診断を初期化
