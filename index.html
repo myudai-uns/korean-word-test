@@ -17,7 +17,7 @@
 @font-face{font-family:"LINESeedKR";src:url("fonts/LINESeedKR-Bd.woff2") format("woff2");font-weight:700 800;font-display:swap}
 :root{
   --bg:#000; --panel:#16181c; --panel2:#1f2125; --gray:#26282d; --gray-h:#33363c;
-  --line:#2a2d33; --text:#f2f3f5; --mute:#8b909a; --faint:#5c616b;
+  --line:#2a2d33; --text:#f2f3f5; --mute:#FFFFFF; --faint:rgba(255,255,255,.78);
   --red:#ff3b3b; --blue:#2f8bff; --green:#4cd964; --gold:#ffc83c;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -151,10 +151,12 @@ button{font-family:inherit}
 .room-slide{position:relative;flex:0 0 602px;width:602px;height:1178px;scroll-snap-align:start}
 .slide-inner{position:absolute;left:0;top:255px;width:602px;height:686px}
 /* ROOMパラメータ（ラベル/番号・語数/バー/%の間に余白。ランクD,B=36px・A=98pxで下端揃え） */
+.rmenu-bg{position:absolute;left:56px;top:-10px;width:172px;height:170px;background:rgba(255,255,255,.15);border-radius:18px;cursor:pointer}
 .hv-roomlabel{position:absolute;left:83px;top:0;font-size:36px;letter-spacing:2px;line-height:1;cursor:pointer}
 .hv-roomno{position:absolute;left:72px;top:42px;font-size:108px;line-height:1;cursor:pointer}
-.hv-learned{position:absolute;left:244px;top:10px;font-size:40px;line-height:1}
-.hv-roompwr{position:absolute;left:244px;top:76px;font-size:48px;line-height:1}
+.pcard{position:absolute;left:228px;top:-4px;width:138px;height:158px;background:rgba(255,255,255,.88);border-radius:14px}
+.hv-learned{position:absolute;left:244px;top:10px;font-size:40px;line-height:1;color:#1a1a1a}
+.hv-roompwr{position:absolute;left:244px;top:76px;font-size:48px;line-height:1;color:#1a1a1a}
 .hv-learned .unit{font-size:24px;margin-left:4px}
 .hv-roompwr .unit{font-size:28px;margin-left:4px}
 .hv-wordsg{left:238px;top:56px;width:89px;height:10px;padding:2px}
@@ -194,7 +196,10 @@ button{font-family:inherit}
 .tlist{display:grid;grid-template-columns:1fr 1fr;gap:6px}
 .trow{display:flex;align-items:center;gap:8px;padding:8px 10px;background:rgba(0,0,0,.55);font-size:12px;font-weight:700}
 .trow .tcode{font-weight:900;letter-spacing:1px;width:48px}
+.trow{cursor:pointer}
 .trow.cur{background:rgba(0,0,0,.85);box-shadow:0 0 0 2px #fff inset}
+.tpeek{grid-column:1/-1;display:flex;gap:12px;align-items:center;background:rgba(255,255,255,.92);color:#1a1a1a;padding:12px;font-size:12.5px;line-height:1.8;font-weight:700}
+.tpeek img{width:74px;height:74px;flex:0 0 auto}
 .type-upd{margin-top:10px;text-align:center;color:var(--mute);font-size:11px;font-weight:700;letter-spacing:1px}
 .type-upd b{color:var(--text)}
 .type-upd .btn{display:inline-block;width:auto;padding:5px 10px;font-size:11px;margin-left:8px}
@@ -554,8 +559,10 @@ function buildRoomSlides(){
     const big=rLast?circ("rank-b",rLast):`<div class="rank-b" style="background:rgba(0,0,0,.22)">-</div>`;
     return `<div class="room-slide" data-n="${n}" style="background:${roomBg(n)}">
       <div class="slide-inner">
+      <div class="rmenu-bg" onclick="renderRoomMenu()"></div>
       <div class="hv-roomlabel" onclick="renderRoomMenu()">ROOM</div>
       <div class="hv-roomno" onclick="renderRoomMenu()">${nn}</div>
+      <div class="pcard"></div>
       <div class="hv-learned">${ri.learned}<span class="unit">語</span></div>
       <div class="gauge hv-wordsg"><div class="gfill" style="background:#00FFFF;width:${Math.round(ri.learned/ri.total*100)}%"></div></div>
       <div class="hv-roompwr">${ri.pwr}<span class="unit">%</span></div>
@@ -620,22 +627,22 @@ const AXES=[
  {no:4,side:"left",L:"Q",R:"D",ln:"瞬発誤答",rn:"熟考正答"}
 ];
 const TYPE_INFO={
- FMPQ:["語感フライング型","似た意味を思い込み、音に寄せて素早く回答するタイプ"],
- FMPD:["慎重な音写型","意味の近い語で迷い、書くと表記で崩れやすいタイプ"],
- FMSQ:["ニュアンス置換型","似た意味の別単語へ素早く飛びつくタイプ"],
- FMSD:["定義こだわり型","細かな意味差を考え込み、別単語へ置換しやすいタイプ"],
- FCPQ:["シーン連鎖型","場面から連想し、音に近い表記で回答しやすいタイプ"],
- FCPD:["場面照合型","関連場面を比較しながら、表記で迷いやすいタイプ"],
- FCSQ:["イメージ先行型","場面のイメージから、関連語へ素早く連想するタイプ"],
- FCSD:["文脈深読み型","場面を考えすぎて、関連語と混同しやすいタイプ"],
- UMPQ:["語感ランダム型","意味が曖昧で、音の印象から回答が揺れるタイプ"],
- UMPD:["表記探索型","似た意味と表記の間で迷い、回答が安定しないタイプ"],
- UMSQ:["意味ぼんやり型","日本語の意味から、近い韓国語へ飛びやすいタイプ"],
- UMSD:["概念探索型","似た意味の候補を考えるが、まだ定着していないタイプ"],
- UCPQ:["連想ジャンプ型","場面の雰囲気から、別の語へ素早く移るタイプ"],
- UCPD:["シーン迷子型","同じ場面の語を比較し、表記でも迷いやすいタイプ"],
- UCSQ:["雰囲気回答型","場面の印象で回答が揺れ、別単語へ飛びやすいタイプ"],
- UCSD:["文脈迷路型","関連語が多い場面で整理がつかず、迷いやすいタイプ"]
+ FMPQ:["DJ","似た意味を思い込み、音に寄せて素早く回答するタイプ"],
+ FMPD:["校閲者","意味の近い語で迷い、書くと表記で崩れやすいタイプ"],
+ FMSQ:["コピーライター","似た意味の別単語へ素早く飛びつくタイプ"],
+ FMSD:["辞書編集者","細かな意味差を考え込み、別単語へ置換しやすいタイプ"],
+ FCPQ:["ツアーガイド","場面から連想し、音に近い表記で回答しやすいタイプ"],
+ FCPD:["鑑定士","関連場面を比較しながら、表記で迷いやすいタイプ"],
+ FCSQ:["フォトグラファー","場面のイメージから、関連語へ素早く連想するタイプ"],
+ FCSD:["小説家","場面を考えすぎて、関連語と混同しやすいタイプ"],
+ UMPQ:["即興演奏家","意味が曖昧で、音の印象から回答が揺れるタイプ"],
+ UMPD:["暗号解読者","似た意味と表記の間で迷い、回答が安定しないタイプ"],
+ UMSQ:["印象派画家","日本語の意味から、近い韓国語へ飛びやすいタイプ"],
+ UMSD:["哲学者","似た意味の候補を考えるが、まだ定着していないタイプ"],
+ UCPQ:["冒険家","場面の雰囲気から、別の語へ素早く移るタイプ"],
+ UCPD:["探偵","同じ場面の語を比較し、表記でも迷いやすいタイプ"],
+ UCSQ:["詩人","場面の印象で回答が揺れ、別単語へ飛びやすいタイプ"],
+ UCSD:["考古学者","関連語が多い場面で整理がつかず、迷いやすいタイプ"]
 };
 /* 各タイプの特徴文（タイプ詳細用） */
 const TYPE_LONG={
@@ -824,6 +831,8 @@ function refreshHomeStats(){
 }
 
 /* --- タイプ詳細画面（コード＋キャラクター＋4軸＋タイプの特徴＋16タイプ一覧） --- */
+let _typePeek=null;
+function togglePeek(code){_typePeek=_typePeek===code?null:code;renderTypeDetail();}
 function renderTypeDetail(){
   const d=computeDiagnosis();
   const any=d.axes.some(a=>a.code);
@@ -842,10 +851,15 @@ function renderTypeDetail(){
   const longTxt=d.complete?(TYPE_LONG[d.code]||ti[1])
     :(any?`（仮判定）現時点では <b>${esc(fullCode)} ${esc(ti[0])}</b> に近い傾向です。<br>${esc(TYPE_LONG[fullCode]||"")}`
          :"問題を解くと、あなたの学習傾向が分析されます。");
-  // 16タイプ一覧（現在のタイプを強調）
+  // 16タイプ一覧（現在のタイプを強調。タップでキャラクターと説明を展開）
   const list=Object.entries(TYPE_INFO).map(([code,[name]])=>{
     const cur=d.complete&&code===d.code;
-    return `<div class="trow${cur?" cur":""}"><span class="tcode">${code}</span><span>${esc(name)}</span></div>`;
+    let row=`<div class="trow${cur?" cur":""}" onclick="togglePeek('${code}')"><span class="tcode">${code}</span><span>${esc(name)}</span></div>`;
+    if(_typePeek===code){
+      row+=`<div class="tpeek"><img src="characters/${code.toLowerCase()}.svg" alt="">
+        <div><b>${code} ${esc(name)}</b><br>${esc(TYPE_LONG[code]||"")}</div></div>`;
+    }
+    return row;
   }).join("");
   document.getElementById("s-type").innerHTML=`
    <div class="page">
@@ -1601,7 +1615,7 @@ function renderRoomMenu(){
 /* ============================================================ utils ============================================================ */
 function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
 /* バージョン表示（トップページ） */
-const APP_VERSION="v2.11.2 (2026-06-06)";
+const APP_VERSION="v2.12.0 (2026-06-06)";
 (function(){const el=document.getElementById("appver");if(el)el.textContent=APP_VERSION;})();
 getUserId();
 updateDiagnosis();   // 起動時に診断を初期化
