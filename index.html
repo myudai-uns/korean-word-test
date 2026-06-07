@@ -718,9 +718,9 @@ function roomListHTML(n){
 function roomInfoFor(n){
   const ids=LEVEL_SECTIONS[curLevel][n]||[],s=loadStats(),now=Date.now();
   const learned=ids.filter(id=>s[id]&&s[id].reviewCount>0);
-  let pw=0;learned.forEach(id=>pw+=displayScore(getStat(id,s),now));
+  let pw=0;ids.forEach(id=>pw+=displayScore(getStat(id,s),now)); // ステータスと同じ「ROOM全単語平均（未学習=0）」
   const rec=loadSections()[curLevel+"-"+String(n).padStart(2,"0")]||{};
-  return{learned:learned.length,total:ids.length||1,pwr:learned.length?Math.round(pw/learned.length):0,
+  return{learned:learned.length,total:ids.length||1,pwr:ids.length?Math.round(pw/ids.length):0,
     recent:(rec.recentRanks||[]).slice(-3),best:rec.bestRank||null};
 }
 const LEVEL_SLIDE_BG="#9FA6AD";
@@ -1986,7 +1986,7 @@ function renderRoomCurve(){_curveIdx=curSection;renderCurveCarousel();}
 /* ============================================================ utils ============================================================ */
 function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
 /* バージョン表示（トップページ） */
-const APP_VERSION="v2.28.7 (2026-06-07)";
+const APP_VERSION="v2.28.8 (2026-06-08)";
 (function(){const el=document.getElementById("appver");if(el)el.textContent=APP_VERSION;})();
 getUserId();
 updateDiagnosis();   // 起動時に診断を初期化
