@@ -821,13 +821,16 @@ function scaleHome(){
   const app=document.querySelector(".app");
   const cs=app?getComputedStyle(app):null;
   const padV=cs?((parseFloat(cs.paddingTop)||0)+(parseFloat(cs.paddingBottom)||0)):0;
-  const availH=Math.max(300,(window.innerHeight||1178)-padV);
+  // iOS Safariの下部ツールバー(フッター)を考慮: visualViewportの実高さ−安全マージン12px
+  const vvh=(window.visualViewport&&window.visualViewport.height)||window.innerHeight||1178;
+  const availH=Math.max(300,vvh-padV-12);
   const appW=app?app.clientWidth:Math.min(window.innerWidth||602,602);
   const s=Math.min(appW/602,availH/1178,1);
   el.style.transform=`scale(${s})`; // #s-homeのjustify-content:center+origin:top centerで水平中央は自動
   el.style.marginBottom=`-${Math.round(1178*(1-s))}px`; // transformはレイアウト高を変えないため余白を回収
 }
 window.addEventListener("resize",scaleHome);
+if(window.visualViewport)window.visualViewport.addEventListener("resize",scaleHome); // ツールバー出入りに追従
 function renderHome(){
   const d=computeDiagnosis();
   // 1軸でも判定できたら即コード表示（テストごとに更新される）
@@ -1956,7 +1959,7 @@ function renderRoomCurve(){_curveIdx=curSection;renderCurveCarousel();}
 /* ============================================================ utils ============================================================ */
 function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
 /* バージョン表示（トップページ） */
-const APP_VERSION="v2.26.3 (2026-06-07)";
+const APP_VERSION="v2.26.4 (2026-06-07)";
 (function(){const el=document.getElementById("appver");if(el)el.textContent=APP_VERSION;})();
 getUserId();
 updateDiagnosis();   // 起動時に診断を初期化
