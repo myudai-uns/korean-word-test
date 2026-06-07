@@ -1801,7 +1801,8 @@ function curveSlideHTML(i,now){
 }
 function renderCurveCarousel(){
   const N=LEVEL_INFO[curLevel].count;
-  const slides=Array.from({length:N+1},(_,i)=>`<div class="curve-slide" data-i="${i}"><div class="curve-slide-in" id="cs-${i}"></div></div>`).join("");
+  // 各スライドが自分の背景色を持つフルブリード構成（色の区切れ目がスワイプに追従）
+  const slides=Array.from({length:N+1},(_,i)=>`<div class="curve-slide" data-i="${i}" style="background:${i>0?roomBg(i):LEVEL_SLIDE_BG}"><div class="curve-slide-in" id="cs-${i}"></div></div>`).join("");
   document.getElementById("s-curve").innerHTML=`
    <div class="page" style="padding-left:0;padding-right:0">
     <div class="page-head" style="padding:0 16px"><button class="back" onclick="show('s-home')">‹</button><h2>PWRメータ</h2></div>
@@ -1876,7 +1877,7 @@ function renderRoomCurve(){_curveIdx=curSection;renderCurveCarousel();}
 /* ============================================================ utils ============================================================ */
 function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
 /* バージョン表示（トップページ） */
-const APP_VERSION="v2.23.0 (2026-06-07)";
+const APP_VERSION="v2.23.1 (2026-06-07)";
 (function(){const el=document.getElementById("appver");if(el)el.textContent=APP_VERSION;})();
 getUserId();
 updateDiagnosis();   // 起動時に診断を初期化
