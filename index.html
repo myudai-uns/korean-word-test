@@ -1094,9 +1094,9 @@ function renderTypeDetail(){
     const pos=100-t; // 左寄りほど点が左へ（ステータス画面と同じUI）
     return `<div class="ax2row" onclick="toggleAxisPeek(${i})">
       <span class="ax2dot" style="background:${AXIS_COLORS[ax.L]}"></span>
-      <span class="ax2l"${domLeft?` style="color:${col}"`:""}>${ax.L}</span>
+      <span class="ax2l">${ax.L}</span>
       <div class="ax2bar"><div class="ax2line"></div>${ticks}<div class="ax2knob" style="left:${pos}%;background:${col}"></div></div>
-      <span class="ax2l"${!domLeft?` style="color:${col}"`:""}>${ax.R}</span>
+      <span class="ax2l">${ax.R}</span>
       <span class="ax2dot" style="background:${AXIS_COLORS[ax.R]}"></span>
     </div>`;
   }).join("");
@@ -1972,7 +1972,7 @@ function renderRoomCurve(){_curveIdx=curSection;renderCurveCarousel();}
 /* ============================================================ utils ============================================================ */
 function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
 /* バージョン表示（トップページ） */
-const APP_VERSION="v2.28.3 (2026-06-07)";
+const APP_VERSION="v2.28.4 (2026-06-07)";
 (function(){const el=document.getElementById("appver");if(el)el.textContent=APP_VERSION;})();
 getUserId();
 updateDiagnosis();   // 起動時に診断を初期化
