@@ -817,8 +817,14 @@ function buildRoomSlides(){
 /* 602px基準で比例スケール（PCは等倍上限・中央寄せ） */
 function scaleHome(){
   const el=document.getElementById("homewrap");if(!el)return;
-  const s=Math.min((window.innerWidth||602)/602,1);
-  el.style.transform=`scale(${s})`;
+  // 機種ごとに幅・高さ（セーフエリア控除後）の両方に収まるスケールを採用（下詰まり防止）
+  const app=document.querySelector(".app");
+  const cs=app?getComputedStyle(app):null;
+  const padV=cs?((parseFloat(cs.paddingTop)||0)+(parseFloat(cs.paddingBottom)||0)):0;
+  const availH=Math.max(300,(window.innerHeight||1178)-padV);
+  const appW=app?app.clientWidth:Math.min(window.innerWidth||602,602);
+  const s=Math.min(appW/602,availH/1178,1);
+  el.style.transform=`scale(${s})`; // #s-homeのjustify-content:center+origin:top centerで水平中央は自動
   el.style.marginBottom=`-${Math.round(1178*(1-s))}px`; // transformはレイアウト高を変えないため余白を回収
 }
 window.addEventListener("resize",scaleHome);
@@ -1950,7 +1956,7 @@ function renderRoomCurve(){_curveIdx=curSection;renderCurveCarousel();}
 /* ============================================================ utils ============================================================ */
 function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
 /* バージョン表示（トップページ） */
-const APP_VERSION="v2.26.2 (2026-06-07)";
+const APP_VERSION="v2.26.3 (2026-06-07)";
 (function(){const el=document.getElementById("appver");if(el)el.textContent=APP_VERSION;})();
 getUserId();
 updateDiagnosis();   // 起動時に診断を初期化
