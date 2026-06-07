@@ -242,7 +242,7 @@ button{font-family:inherit}
 .st-slide{flex:0 0 602px;width:602px;position:relative;scroll-snap-align:start}
 .st-in{position:absolute;inset:0}
 .home-wrap.status .home-head{z-index:4} /* 固定ヘッダーはスライドの上に浮かせる */
-.st-top{position:absolute;left:12px;top:712px;width:578px}
+.st-top{position:absolute;left:12px;top:646px;width:578px} /* ヘッダー直下に詰める */
 .st-mbti{position:absolute;left:24px;top:60px;height:420px;width:554px;display:flex;flex-direction:column;z-index:4;cursor:pointer;
   background:rgba(255,255,255,.15);padding:20px 24px;box-sizing:border-box} /* 白15%パネル(UI.pdf)・スワイプで動かない */
 .st-job{text-align:center;font-size:27px;font-weight:800;margin-bottom:14px}
@@ -1226,7 +1226,7 @@ function defaultStat(){return{memoryScore:DEFAULT_SCORE,lastReviewedAt:null,revi
 function getStat(id,store){const s=(store||loadStats())[id];return s?Object.assign(defaultStat(),s):defaultStat();}
 function stabilityHours(st){return 12*(1+(st.consecutiveCorrectCount||0))+6*(st.correctCount||0);} // 正解・連続正解が多いほど安定（減衰が緩やか）
 function displayScore(st,nowMs){
-  if(!st||st.lastReviewedAt==null)return st?st.memoryScore:DEFAULT_SCORE;
+  if(!st||st.lastReviewedAt==null)return 0; // 未学習は0（ROOMごとのメータは独立、やっていないROOMは0%）
   const h=(nowMs-new Date(st.lastReviewedAt).getTime())/3600000;
   return st.memoryScore*Math.exp(-h/Math.max(1,stabilityHours(st)));
 }
@@ -1827,7 +1827,7 @@ function chartPoints(nowMs,words){
         if(r.isCorrect){cc++;cons++;}else cons=0;
         st={memoryScore:(r.memoryScoreAfter!=null?r.memoryScoreAfter:DEFAULT_SCORE),lastReviewedAt:r.answeredAt,correctCount:cc,consecutiveCorrectCount:cons};
       }
-      t+=st?displayScore(st,T):DEFAULT_SCORE;
+      t+=st?displayScore(st,T):0; // その時点で未学習なら0
     });
     return t/Math.max(1,words.length);
   };
@@ -1972,7 +1972,7 @@ function renderRoomCurve(){_curveIdx=curSection;renderCurveCarousel();}
 /* ============================================================ utils ============================================================ */
 function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
 /* バージョン表示（トップページ） */
-const APP_VERSION="v2.28.4 (2026-06-07)";
+const APP_VERSION="v2.28.5 (2026-06-07)";
 (function(){const el=document.getElementById("appver");if(el)el.textContent=APP_VERSION;})();
 getUserId();
 updateDiagnosis();   // 起動時に診断を初期化
