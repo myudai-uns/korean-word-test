@@ -185,6 +185,11 @@ button{font-family:inherit}
 .bonus-icons{position:absolute;right:8px;top:150px;display:flex;gap:6px;z-index:4;cursor:pointer}
 .bonus-icons .bi{width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;overflow:hidden}
 .bonus-icons .bi img{width:84%;height:84%;object-fit:contain}
+.pwr-fine{position:absolute;left:44px;top:10px;display:flex;align-items:center;gap:8px;z-index:2;pointer-events:none}
+.pf-lab{font-size:13px;font-weight:900;letter-spacing:1px}
+.pf-meter{width:150px;height:9px;background:rgba(0,0,0,.45);border-radius:999px;padding:2px;box-sizing:border-box}
+.pf-fill{height:100%;border-radius:999px;background:#00FF37;width:0;transition:width .3s linear}
+.pf-num{font-size:15px;font-weight:900;font-variant-numeric:tabular-nums}
 .present-btn{position:absolute;right:2px;top:8px;width:78px;height:78px;border:none;background:transparent;cursor:pointer;z-index:5;padding:0}
 .present-btn img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 2px 5px rgba(0,0,0,.3))}
 .present-btn.rb img{animation:rbglow 1.4s linear infinite}
@@ -435,6 +440,7 @@ button{font-family:inherit}
   <div class="screen on" id="s-home">
     <div class="home-wrap" id="homewrap">
       <div class="home-head">
+      <div class="pwr-fine" id="pwr-fine"><span class="pf-lab">PWR</span><div class="pf-meter"><div class="pf-fill" id="pf-fill"></div></div><span class="pf-num" id="pf-num">0.00%</span></div>
       <div class="avatar-circle" onclick="enterStatusMode()"><img class="avatar-image" id="hv-char" src="characters/analyzing.svg" alt=""></div>
       <div class="hv-level" id="hv-level" onclick="enterStatusMode()" style="cursor:pointer">Lv.<span>1</span></div>
       <div class="hv-code" id="hv-code" onclick="enterStatusMode()">----</div>
@@ -746,6 +752,14 @@ function claimPresent(){
   renderHome(); // XP・プレゼント状態を更新
 }
 /* PWR=学習済み（1回以上出題）全単語の平均記憶率。時間で低下し復習で上昇 */
+function pwrOverallExact(){const s=loadStats(),ids=Object.keys(s);if(!ids.length)return 0;const now=Date.now();let t=0;ids.forEach(id=>t+=displayMemoryScore(getStat(id,s),now));return t/ids.length;}
+function updatePwrFine(){
+  const num=document.getElementById("pf-num");if(!num)return;
+  const v=pwrOverallExact();
+  num.textContent=v.toFixed(2)+"%";                 // 小数点2位まで（みるみる減るのが見える）
+  document.getElementById("pf-fill").style.width=((v-Math.floor(v))*100)+"%"; // 小数部のみのメーター
+}
+setInterval(()=>{const h=document.getElementById("s-home");if(h&&h.classList.contains("on"))updatePwrFine();},300);
 function pwrOverall(){
   const s=loadStats(),ids=Object.keys(s);
   if(!ids.length)return 0;
@@ -992,6 +1006,7 @@ function renderHome(){
   scaleHome();
   updatePresent();
   checkAchievements();
+  updatePwrFine();
 }
 
 /* ============================================================ 韓国語単語タイプ診断（4軸16タイプ） ============================================================ */
@@ -2291,7 +2306,7 @@ function renderRoomCurve(){_curveIdx=curSection;renderCurveCarousel();}
 /* ============================================================ utils ============================================================ */
 function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
 /* バージョン表示（トップページ） */
-const APP_VERSION="v2.32.0 (2026-06-08)";
+const APP_VERSION="v2.32.1 (2026-06-08)";
 (function(){const el=document.getElementById("appver");if(el)el.textContent=APP_VERSION;})();
 getUserId();
 updateDiagnosis();   // 起動時に診断を初期化
