@@ -182,6 +182,9 @@ button{font-family:inherit}
 .slide-img{position:absolute;left:24px;top:178px;width:554px;height:507px;object-fit:contain}
 /* 単語一覧モード：スワイプ連動（--lift/--pはhome-wrapに設定） */
 .home-wrap .slide-inner{transform:translateY(var(--lift,0px));transition:transform .35s ease}
+.bonus-icons{position:absolute;right:8px;top:150px;display:flex;gap:6px;z-index:4;cursor:pointer}
+.bonus-icons .bi{width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;overflow:hidden}
+.bonus-icons .bi img{width:84%;height:84%;object-fit:contain}
 .present-btn{position:absolute;right:2px;top:8px;width:78px;height:78px;border:none;background:transparent;cursor:pointer;z-index:5;padding:0}
 .present-btn img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 2px 5px rgba(0,0,0,.3))}
 .present-btn.rb img{animation:rbglow 1.4s linear infinite}
@@ -436,6 +439,12 @@ button{font-family:inherit}
       <div class="hv-level" id="hv-level" onclick="enterStatusMode()" style="cursor:pointer">Lv.<span>1</span></div>
       <div class="hv-code" id="hv-code" onclick="enterStatusMode()">----</div>
       <button class="present-btn" id="present-btn" onclick="openPresent()"><img src="icons/present.webp" alt="プレゼント"><span class="present-badge" id="present-badge" style="display:none">!</span></button>
+      <div class="bonus-icons" onclick="openPresent()">
+        <div class="bi"><img src="icons/bonus-daily.webp" alt="毎日"></div>
+        <div class="bi"><img src="icons/bonus-rank.webp" alt="ランク"></div>
+        <div class="bi"><img src="icons/bonus-level.webp" alt="レベル"></div>
+        <div class="bi"><img src="icons/bonus-pwr.webp" alt="PWR"></div>
+      </div>
       <div class="status-panel" onclick="enterStatusMode()"></div>
       <div class="hv-lab hv-xplabel">XP</div>
       <div class="gauge hv-xpg"><div class="gfill" id="hv-xpfill" style="background:#FFFF37"></div></div>
@@ -2282,7 +2291,7 @@ function renderRoomCurve(){_curveIdx=curSection;renderCurveCarousel();}
 /* ============================================================ utils ============================================================ */
 function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
 /* バージョン表示（トップページ） */
-const APP_VERSION="v2.31.1 (2026-06-08)";
+const APP_VERSION="v2.32.0 (2026-06-08)";
 (function(){const el=document.getElementById("appver");if(el)el.textContent=APP_VERSION;})();
 getUserId();
 updateDiagnosis();   // 起動時に診断を初期化
