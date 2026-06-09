@@ -182,6 +182,21 @@ button{font-family:inherit}
 .slide-img{position:absolute;left:24px;top:178px;width:554px;height:507px;object-fit:contain}
 /* 単語一覧モード：スワイプ連動（--lift/--pはhome-wrapに設定） */
 .home-wrap .slide-inner{transform:translateY(var(--lift,0px));transition:transform .35s ease}
+.cal-btn{position:absolute;left:10px;top:150px;width:42px;height:42px;border:none;background:rgba(255,255,255,.18);border-radius:50%;cursor:pointer;z-index:4;padding:0;overflow:hidden;display:flex;align-items:center;justify-content:center}
+.cal-btn img{width:84%;height:84%;object-fit:contain}
+#calendar-modal{position:fixed;inset:0;z-index:400;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.55)}
+#calendar-modal.on{display:flex}
+.cal-card{width:340px;max-width:88vw;background:#fff;color:#1a1a1a;padding:20px;position:relative}
+.cal-h{font-size:19px;font-weight:900;text-align:center;margin-bottom:12px}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+.cal-grid .cd{aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;position:relative}
+.cal-grid .wd{font-size:11px;font-weight:800;color:#888;aspect-ratio:auto;padding:2px 0}
+.cal-grid .today{background:#FFE9B0;border-radius:6px}
+.cal-grid .launched::after{content:"◎";position:absolute;font-size:26px;color:rgba(224,131,26,.7);font-weight:400}
+.cal-grid .sp{color:#E0433b}
+.cal-sp{margin-top:14px;text-align:center;font-size:14px;font-weight:800}
+.cal-sp .rbtext{font-weight:900}
+.cal-close{position:absolute;right:10px;top:6px;background:transparent;border:none;font-size:24px;font-weight:900;color:#888;cursor:pointer}
 .bonus-icons{position:absolute;right:8px;top:150px;display:flex;gap:6px;z-index:4;cursor:pointer}
 .bonus-icons .bi{width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;overflow:hidden}
 .bonus-icons .bi img{width:84%;height:84%;object-fit:contain}
@@ -441,6 +456,7 @@ button{font-family:inherit}
     <div class="home-wrap" id="homewrap">
       <div class="home-head">
       <div class="pwr-fine" id="pwr-fine"><span class="pf-lab">PWR</span><div class="pf-meter"><div class="pf-fill" id="pf-fill"></div></div><span class="pf-num" id="pf-num">0.00%</span></div>
+      <button class="cal-btn" id="cal-btn" onclick="openCalendar()"><img src="icons/bonus-daily.webp" alt="カレンダー"></button>
       <div class="avatar-circle" onclick="enterStatusMode()"><img class="avatar-image" id="hv-char" src="characters/analyzing.svg" alt=""></div>
       <div class="hv-level" id="hv-level" onclick="enterStatusMode()" style="cursor:pointer">Lv.<span>1</span></div>
       <div class="hv-code" id="hv-code" onclick="enterStatusMode()">----</div>
@@ -483,6 +499,7 @@ button{font-family:inherit}
   <div class="screen" id="s-type"></div>
 </div>
 <div id="present-modal"></div>
+<div id="calendar-modal"></div>
 
 <script src="words-middle.js"></script>
 <script src="words-beginner.js"></script>
@@ -673,11 +690,59 @@ function totalTests(){const set=new Set();loadHistory().forEach(r=>{if(r.testId)
 let _secOfWord=null;
 function secOfWord(){if(_secOfWord)return _secOfWord;const m={};["beginner","middle"].forEach(lv=>{const L=LEVEL_SECTIONS[lv]||{};Object.keys(L).forEach(n=>{(L[n]||[]).forEach(id=>{m[id]=lv+"-"+n;});});});_secOfWord=m;return m;}
 function roomsPlayed(){const m=secOfWord(),set=new Set();loadHistory().forEach(r=>{const k=m[r.wordId];if(k)set.add(k);});return set.size;}
-/* 達成ボーナス（毎日起動/回数/ROOM種類）。条件を満たすたびプレゼントを1個追加（各1回） */
+/* n番目の曜日(weekday:0=日)の日付。可変祝日用 */
+function nthWeekday(y,m,wd,n){let d=new Date(y,m,1),c=0;while(d.getMonth()===m){if(d.getDay()===wd){c++;if(c===n)return new Date(d);}d.setDate(d.getDate()+1);}return null;}
+/* その日にかかわる特別ボーナス（無ければnull） */
+function specialBonusFor(dt){
+  const y=dt.getFullYear(),m=dt.getMonth(),day=dt.getDate();
+  const eq=d=>d&&d.getMonth()===m&&d.getDate()===day;
+  if(m===0&&day===1)return{name:"元日",amount:300};
+  if(m===1&&day===14)return{name:"バレンタイン",amount:150};
+  if(m===2&&day===3)return{name:"ひな祭り",amount:150};
+  if(eq(nthWeekday(y,4,0,2)))return{name:"母の日",amount:200};
+  if(m===4&&day===5)return{name:"こどもの日",amount:150};
+  if(eq(nthWeekday(y,5,0,3)))return{name:"父の日",amount:200};
+  if(eq(nthWeekday(y,6,1,3)))return{name:"海の日",amount:200};
+  if(m===6&&day===7)return{name:"七夕",amount:150};
+  if(m===9&&day===31)return{name:"ハロウィン",amount:200};
+  if(m===11&&(day===24||day===25))return{name:"クリスマス",amount:300};
+  if(m===11&&day===31)return{name:"大晦日",amount:200};
+  return null;
+}
+function launchedDays(){try{return JSON.parse(localStorage.getItem(LS_LAUNCH)||"[]")||[];}catch(e){return[];}}
+function markLaunch(){const a=launchedDays(),tk=dayKey(Date.now());if(!a.includes(tk)){a.push(tk);localStorage.setItem(LS_LAUNCH,JSON.stringify(a));}}
+function openCalendar(){
+  const m=document.getElementById("calendar-modal");
+  const now=new Date(),y=now.getFullYear(),mo=now.getMonth();
+  const set=new Set(launchedDays());
+  const first=new Date(y,mo,1).getDay(),days=new Date(y,mo+1,0).getDate();
+  const wd=["日","月","火","水","木","金","土"].map(w=>`<div class="cd wd">${w}</div>`).join("");
+  let cells="";for(let i=0;i<first;i++)cells+='<div class="cd"></div>';
+  for(let d=1;d<=days;d++){
+    const k=y+"-"+(mo+1)+"-"+d, isToday=(d===now.getDate());
+    const sp=specialBonusFor(new Date(y,mo,d));
+    cells+=`<div class="cd${set.has(k)?" launched":""}${isToday?" today":""}${sp?" sp":""}">${d}</div>`;
+  }
+  const sp=specialBonusFor(now);
+  const spHTML=sp?`<div class="cal-sp"><span class="rbtext">${esc(sp.name)}ボーナス</span> +${sp.amount} XP（プレゼントに追加）</div>`:`<div class="cal-sp" style="color:#888">今日は特別ボーナスはありません</div>`;
+  m.innerHTML=`<div class="cal-card">
+    <button class="cal-close" onclick="closeCalendar()">×</button>
+    <div class="cal-h">${y}年 ${mo+1}月</div>
+    <div class="cal-grid">${wd}${cells}</div>
+    <div class="cal-sp" style="color:#888;font-size:12px;margin-top:8px">◎ = 起動した日</div>
+    ${spHTML}
+  </div>`;
+  m.classList.add("on");
+}
+function closeCalendar(){document.getElementById("calendar-modal").classList.remove("on");}
+/* 達成ボーナス（毎日起動/回数/ROOM種類/特別日）。条件を満たすたびプレゼントを1個追加（各1回） */
 function checkAchievements(){
   const st=_presentState();st.achv=st.achv||{};let changed=false;
   const add=(id,title,amount)=>{if(!st.achv[id]){st.achv[id]=1;st.queue.push({kind:"achv",title,total:amount,at:new Date().toISOString()});changed=true;}};
+  markLaunch();
   add("daily-"+dayKey(Date.now()),"毎日起動ボーナス",50);
+  const _sp=specialBonusFor(new Date());
+  if(_sp)add("sp-"+_sp.name+"-"+new Date().getFullYear(),_sp.name+"ボーナス",_sp.amount);
   const tt=totalTests();
   if(tt>=3)add("tests3","3回プレイ達成",100);
   if(tt>=5)add("tests5","5回プレイ達成",200);
@@ -1369,7 +1434,7 @@ const IME={
 /* ============================================================ ストレージ（全件保存） ============================================================ */
 const LS_HIST="kwt_history_v1", LS_PERFECT="kwt_perfect_v1", LS_USER="kwt_user_v1",
       LS_STATS="kwt_stats_v1", LS_PROG="kwt_progress_v1", LS_SESS="kwt_session_v1",
-      LS_BONUS="kwt_bonus_v1", LS_PRESENT="kwt_present_v1", LS_CARDS="kwt_cards_v1";
+      LS_BONUS="kwt_bonus_v1", LS_PRESENT="kwt_present_v1", LS_CARDS="kwt_cards_v1", LS_LAUNCH="kwt_launch_v1";
 function getUserId(){let u=localStorage.getItem(LS_USER);if(!u){u="u-"+Date.now().toString(36)+Math.random().toString(36).slice(2,7);localStorage.setItem(LS_USER,u);}return u;}
 function loadHistory(){try{return JSON.parse(localStorage.getItem(LS_HIST)||"[]");}catch(e){return[];}}
 function saveAnswer(rec){const h=loadHistory();h.push(rec);localStorage.setItem(LS_HIST,JSON.stringify(h));_histIdxCache=null;}
@@ -2316,7 +2381,7 @@ function renderRoomCurve(){_curveIdx=curSection;renderCurveCarousel();}
 /* ============================================================ utils ============================================================ */
 function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
 /* バージョン表示（トップページ） */
-const APP_VERSION="v2.33.0 (2026-06-08)";
+const APP_VERSION="v2.34.0 (2026-06-08)";
 (function(){const el=document.getElementById("appver");if(el)el.textContent=APP_VERSION;})();
 getUserId();
 updateDiagnosis();   // 起動時に診断を初期化
