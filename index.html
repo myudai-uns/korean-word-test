@@ -656,6 +656,9 @@ function updateSectionRank(n,rank){
 const RANK_COLORS={S:"#FFC400",A:"#FF572F",B:"#1688FF",C:"#A05BD6",D:"#00924A"};
 /* XPは履歴の得点累計（減らない）。レベルLからL+1には L×100 XP 必要 */
 function loadBonus(){return parseInt(localStorage.getItem(LS_BONUS)||"0",10)||0;}
+function loadCards(){try{return JSON.parse(localStorage.getItem(LS_CARDS)||"{}")||{};}catch(e){return{};}}
+function addCards(wordId,n){if(n<=0)return;const c=loadCards();c[wordId]=(c[wordId]||0)+n;localStorage.setItem(LS_CARDS,JSON.stringify(c));}
+function totalCards(){const c=loadCards();return Object.values(c).reduce((a,b)=>a+b,0);}
 function addBonus(n){localStorage.setItem(LS_BONUS,String(loadBonus()+n));}
 function xpInfo(){
   const total=Math.round(loadHistory().reduce((a,r)=>a+(r.score||0),0))+loadBonus();
@@ -1366,7 +1369,7 @@ const IME={
 /* ============================================================ ストレージ（全件保存） ============================================================ */
 const LS_HIST="kwt_history_v1", LS_PERFECT="kwt_perfect_v1", LS_USER="kwt_user_v1",
       LS_STATS="kwt_stats_v1", LS_PROG="kwt_progress_v1", LS_SESS="kwt_session_v1",
-      LS_BONUS="kwt_bonus_v1", LS_PRESENT="kwt_present_v1";
+      LS_BONUS="kwt_bonus_v1", LS_PRESENT="kwt_present_v1", LS_CARDS="kwt_cards_v1";
 function getUserId(){let u=localStorage.getItem(LS_USER);if(!u){u="u-"+Date.now().toString(36)+Math.random().toString(36).slice(2,7);localStorage.setItem(LS_USER,u);}return u;}
 function loadHistory(){try{return JSON.parse(localStorage.getItem(LS_HIST)||"[]");}catch(e){return[];}}
 function saveAnswer(rec){const h=loadHistory();h.push(rec);localStorage.setItem(LS_HIST,JSON.stringify(h));_histIdxCache=null;}
@@ -1860,6 +1863,13 @@ function submit(status,userAnswer){
   else if(st.memoryScore<=C.reviewThreshold){ st.nextReviewAt=answeredAt; }
   else { const hrs=effectiveStability(st,nowMs)*Math.log(st.memoryScore/C.reviewThreshold); st.nextReviewAt=new Date(nowMs+Math.max(0,hrs)*3600000).toISOString(); }
   stats[q.word.id]=st; saveStats(stats);
+  // 単語カード獲得: 正解=残り秒ぶん(最大10) / 不正解・unknown=残り秒÷3(最大3) / 時間切れ=0
+  const remainSec=Math.max(0,limit-elapsed);
+  let cardsEarned;
+  if(isCorrect)cardsEarned=Math.min(10,Math.floor(remainSec));
+  else if(status==="timeout")cardsEarned=0;
+  else cardsEarned=Math.min(3,Math.floor(remainSec/3));
+  addCards(q.word.id,cardsEarned);
   // 履歴（上書きせず全保存）
   const rec={
     userId:state.userId,wordId:q.word.id,testId:state.testId,questionNumber:state.idx+1,
@@ -1874,7 +1884,7 @@ function submit(status,userAnswer){
     displayMemoryScoreBefore:Math.round(dispBefore),displayMemoryScoreAfter:Math.round(dispAfter),
     predictedMemory:Math.round(Mp),actualMemory:Math.round(A),predictionError:Math.round(E),
     wordDifficultyBefore:dwBefore,wordDifficultyAfter:st.wordDifficulty,
-    nextReviewAt:st.nextReviewAt,
+    nextReviewAt:st.nextReviewAt,cardsEarned,
     displayMemoryScoreAfterDecay:Math.round(dispAfter) // 互換
   };
   state.results.push(rec);saveAnswer(rec);
@@ -2306,7 +2316,7 @@ function renderRoomCurve(){_curveIdx=curSection;renderCurveCarousel();}
 /* ============================================================ utils ============================================================ */
 function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
 /* バージョン表示（トップページ） */
-const APP_VERSION="v2.32.1 (2026-06-08)";
+const APP_VERSION="v2.33.0 (2026-06-08)";
 (function(){const el=document.getElementById("appver");if(el)el.textContent=APP_VERSION;})();
 getUserId();
 updateDiagnosis();   // 起動時に診断を初期化
