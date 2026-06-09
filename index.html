@@ -197,11 +197,6 @@ button{font-family:inherit}
 .cal-sp{margin-top:14px;text-align:center;font-size:14px;font-weight:800}
 .cal-sp .rbtext{font-weight:900}
 .cal-close{position:absolute;right:10px;top:6px;background:transparent;border:none;font-size:24px;font-weight:900;color:#888;cursor:pointer}
-.pwr-fine{position:absolute;left:44px;top:10px;display:flex;align-items:center;gap:8px;z-index:2;pointer-events:none}
-.pf-lab{font-size:13px;font-weight:900;letter-spacing:1px}
-.pf-meter{width:150px;height:9px;background:rgba(0,0,0,.45);border-radius:999px;padding:2px;box-sizing:border-box}
-.pf-fill{height:100%;border-radius:999px;background:#00FF37;width:0;transition:width .3s linear}
-.pf-num{font-size:15px;font-weight:900;font-variant-numeric:tabular-nums}
 .reward-rail{position:absolute;right:8px;top:172px;display:flex;flex-direction:column;gap:9px;z-index:5}
 .rr-btn{width:68px;height:68px;border:none;background:rgba(255,255,255,.18);border-radius:50%;cursor:pointer;padding:0;overflow:hidden;display:flex;align-items:center;justify-content:center;position:relative}
 .rr-btn img{width:86%;height:86%;object-fit:contain}
@@ -455,7 +450,6 @@ button{font-family:inherit}
   <div class="screen on" id="s-home">
     <div class="home-wrap" id="homewrap">
       <div class="home-head">
-      <div class="pwr-fine" id="pwr-fine"><span class="pf-lab">PWR</span><div class="pf-meter"><div class="pf-fill" id="pf-fill"></div></div><span class="pf-num" id="pf-num">0.00%</span></div>
       <button class="cal-btn" id="cal-btn" onclick="openCalendar()"><img src="icons/bonus-daily.webp" alt="カレンダー"></button>
       <div class="avatar-circle" onclick="enterStatusMode()"><img class="avatar-image" id="hv-char" src="characters/analyzing.svg" alt=""></div>
       <div class="hv-level" id="hv-level" onclick="enterStatusMode()" style="cursor:pointer">Lv.<span>1</span></div>
@@ -822,10 +816,10 @@ function claimPresent(){
 /* PWR=学習済み（1回以上出題）全単語の平均記憶率。時間で低下し復習で上昇 */
 function pwrOverallExact(){const s=loadStats(),ids=Object.keys(s);if(!ids.length)return 0;const now=Date.now();let t=0;ids.forEach(id=>t+=displayMemoryScore(getStat(id,s),now));return t/ids.length;}
 function updatePwrFine(){
-  const num=document.getElementById("pf-num");if(!num)return;
+  const num=document.getElementById("hv-pwrval");if(!num)return;
   const v=pwrOverallExact();
-  num.textContent=v.toFixed(2)+"%";                 // 小数点2位まで（みるみる減るのが見える）
-  document.getElementById("pf-fill").style.width=((v-Math.floor(v))*100)+"%"; // 小数部のみのメーター
+  num.textContent=v.toFixed(3)+"%";                 // 元のメーターを12.123のように3桁小数で（みるみる減るのが見える）
+  const f=document.getElementById("hv-pwrfill");if(f)f.style.width=v+"%";
 }
 setInterval(()=>{const h=document.getElementById("s-home");if(h&&h.classList.contains("on"))updatePwrFine();},300);
 function pwrOverall(){
@@ -1066,8 +1060,8 @@ function renderHome(){
   document.getElementById("hv-level").innerHTML=`Lv.<span>${xp.level}</span>`;
   document.getElementById("hv-xpval").textContent=`${xp.cur}/${xp.next}`;
   document.getElementById("hv-xpfill").style.width=Math.min(100,Math.round(xp.cur/xp.next*100))+"%";
-  const pw=pwrOverall();
-  document.getElementById("hv-pwrval").textContent=pw+"%";
+  const pw=pwrOverallExact();
+  document.getElementById("hv-pwrval").textContent=pw.toFixed(3)+"%";
   document.getElementById("hv-pwrfill").style.width=pw+"%";
   buildRoomSlides();
   applyHomeBg();
@@ -2381,7 +2375,7 @@ function renderRoomCurve(){_curveIdx=curSection;renderCurveCarousel();}
 /* ============================================================ utils ============================================================ */
 function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
 /* バージョン表示（トップページ） */
-const APP_VERSION="v2.34.1 (2026-06-08)";
+const APP_VERSION="v2.35.0 (2026-06-08)";
 (function(){const el=document.getElementById("appver");if(el)el.textContent=APP_VERSION;})();
 getUserId();
 updateDiagnosis();   // 起動時に診断を初期化
