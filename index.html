@@ -182,8 +182,6 @@ button{font-family:inherit}
 .slide-img{position:absolute;left:24px;top:178px;width:554px;height:507px;object-fit:contain}
 /* 単語一覧モード：スワイプ連動（--lift/--pはhome-wrapに設定） */
 .home-wrap .slide-inner{transform:translateY(var(--lift,0px));transition:transform .35s ease}
-.cal-btn{position:absolute;left:10px;top:150px;width:42px;height:42px;border:none;background:rgba(255,255,255,.18);border-radius:50%;cursor:pointer;z-index:4;padding:0;overflow:hidden;display:flex;align-items:center;justify-content:center}
-.cal-btn img{width:84%;height:84%;object-fit:contain}
 #calendar-modal{position:fixed;inset:0;z-index:400;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.55)}
 #calendar-modal.on{display:flex}
 .cal-card{width:340px;max-width:88vw;background:#fff;color:#1a1a1a;padding:20px;position:relative}
@@ -197,7 +195,7 @@ button{font-family:inherit}
 .cal-sp{margin-top:14px;text-align:center;font-size:14px;font-weight:800}
 .cal-sp .rbtext{font-weight:900}
 .cal-close{position:absolute;right:10px;top:6px;background:transparent;border:none;font-size:24px;font-weight:900;color:#888;cursor:pointer}
-.reward-rail{position:absolute;right:14px;top:432px;display:flex;flex-direction:column;gap:10px;z-index:5;
+.reward-rail{position:absolute;right:14px;top:430px;display:flex;flex-direction:column;gap:8px;z-index:5;
   opacity:1;transition:opacity .3s ease} /* ピルの下・画面右に縦4 */
 .home-wrap.status .reward-rail,.home-wrap.hiderail .reward-rail{opacity:0;pointer-events:none}
 .rr-btn{width:68px;height:68px;border:none;background:rgba(255,255,255,.18);border-radius:50%;cursor:pointer;padding:0;overflow:hidden;display:flex;align-items:center;justify-content:center;position:relative}
@@ -467,11 +465,11 @@ button{font-family:inherit}
   <div class="screen on" id="s-home">
     <div class="home-wrap" id="homewrap">
       <div class="home-head">
-      <button class="cal-btn" id="cal-btn" onclick="openCalendar()"><img src="icons/calendar.webp" alt="カレンダー"></button>
       <div class="avatar-circle" onclick="enterStatusMode()"><img class="avatar-image" id="hv-char" src="characters/analyzing.svg" alt=""></div>
       <div class="hv-level" id="hv-level" onclick="enterStatusMode()" style="cursor:pointer">Lv.<span>1</span></div>
       <div class="hv-code" id="hv-code" onclick="enterStatusMode()">----</div>
       <div class="reward-rail">
+        <button class="rr-btn" id="cal-btn" onclick="openCalendar()"><img src="icons/calendar.webp" alt="カレンダー"></button>
         <button class="rr-btn" id="rr-daily" onclick="openPresent('daily')"><img src="icons/bonus-daily.webp" alt="毎日"><span class="rr-badge" id="pb-daily" style="display:none"></span></button>
         <button class="rr-btn" id="rr-rank" onclick="openPresent('rank')"><img src="icons/bonus-rank.webp" alt="ランク"><span class="rr-badge" id="pb-rank" style="display:none"></span></button>
         <button class="rr-btn" id="rr-level" onclick="openPresent('level')"><img src="icons/bonus-level.webp" alt="レベル"><span class="rr-badge" id="pb-level" style="display:none"></span></button>
@@ -1597,7 +1595,7 @@ function _sfx(){try{_sfxCtx=_sfxCtx||new (window.AudioContext||window.webkitAudi
 function _tone(ctx,freq,t0,dur,vol,type){const o=ctx.createOscillator(),g=ctx.createGain();o.type=type||"sine";o.frequency.value=freq;
   g.gain.setValueAtTime(0,t0);g.gain.linearRampToValueAtTime(vol,t0+0.012);g.gain.exponentialRampToValueAtTime(0.0001,t0+dur);
   o.connect(g);g.connect(ctx.destination);o.start(t0);o.stop(t0+dur+0.05);}
-function sfxStart(){const c=_sfx();if(!c)return;const t=c.currentTime; _tone(c,523,t,0.12,0.25,"square");_tone(c,784,t+0.1,0.18,0.25,"square");}
+function sfxStart(){const c=_sfx();if(!c)return;const t=c.currentTime; _tone(c,440,t,0.09,0.22,"sawtooth");_tone(c,660,t+0.07,0.09,0.22,"sawtooth");_tone(c,990,t+0.14,0.26,0.24,"triangle");} // 出発の3音上昇
 function sfxClaim(){const c=_sfx();if(!c)return;const t=c.currentTime;[523,659,784,1047].forEach((f,i)=>_tone(c,f,t+i*0.07,0.3,0.22,"triangle"));_tone(c,1568,t+0.3,0.45,0.12,"sine");}
 let _koVoice=null,_curAudio=null;
 function _pickKoVoice(){
@@ -2426,7 +2424,7 @@ function renderRoomCurve(){_curveIdx=curSection;renderCurveCarousel();}
 /* ============================================================ utils ============================================================ */
 function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
 /* バージョン表示（トップページ） */
-const APP_VERSION="v2.37.1 (2026-06-10)";
+const APP_VERSION="v2.37.2 (2026-06-10)";
 (function(){const el=document.getElementById("appver");if(el)el.textContent=APP_VERSION;})();
 getUserId();
 updateDiagnosis();   // 起動時に診断を初期化
