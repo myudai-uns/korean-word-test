@@ -222,6 +222,14 @@ button{font-family:inherit}
 .pm-line span:last-child{color:#E0831A}
 .pm-line .rbtext{color:transparent}
 .pm-bonus .rbtext,.pm-line .rbtext{background:linear-gradient(90deg,#ff3b3b,#ffb13b,#ffe93b,#3bff6a,#3bc4ff,#b13bff);-webkit-background-clip:text;background-clip:text;color:transparent}
+.pm-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:14px 0 16px;max-height:46vh;overflow-y:auto}
+.pm-item{background:rgba(0,0,0,.85);color:#fff;border:none;padding:12px 6px 10px;font-family:inherit;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:5px}
+.pm-item img{width:56px;height:56px;object-fit:contain}
+.pm-item .ttl{font-size:11px;font-weight:800;line-height:1.3}
+.pm-item .amt{font-size:17px;font-weight:900;color:#FFC400}
+.pm-item.claimed{background:#E3E3E3;color:#999;cursor:default}
+.pm-item.claimed img{filter:grayscale(1);opacity:.5}
+.pm-item.claimed .amt{color:#999;font-size:13px}
 .pm-btn{width:100%;background:rgba(0,0,0,.85);color:#fff;border:none;border-radius:0;font-family:inherit;font-size:18px;font-weight:900;padding:13px;cursor:pointer}
 .pm-btn:active{background:rgba(0,0,0,.7)}
 .pm-close{position:absolute;right:10px;top:6px;background:transparent;border:none;font-size:24px;font-weight:900;color:#888;cursor:pointer}
@@ -793,26 +801,25 @@ function updatePresent(){
 }
 function _bonusRow(label,v,cls){return v>0?`<div class="pm-line"><span>${label}</span><span class="${cls||''}">+${v}</span></div>`:"";}
 let _presCat="rank";
+function _presItemLabel(r){return r.kind==="achv"?(r.title||"達成ボーナス"):("RANK "+r.rank+" のごほうび");}
 function openPresent(cat){
   _presCat=cat||"rank";
   const m=document.getElementById("present-modal");
   const q=_presentState().queue.filter(x=>x.cat===_presCat);
   if(q.length>0){
-    const r=q[0];
-    const body=(r.kind==="achv")
-      ? `<div class="pm-sub">${esc(r.title||"達成ボーナス")}</div><div class="pm-reward">+${r.total}<small> XP</small></div><div class="pm-bonus" style="margin-top:14px"><span class="rbtext">${esc(PRES_LABEL[_presCat])}</span>を獲得！</div>`
-      : `<div class="pm-sub">RANK ${r.rank} のごほうび</div><div class="pm-reward">+${r.total}<small> XP</small></div>
-         <div class="pm-breakdown">
-           ${_bonusRow("基本",r.base)}
-           ${_bonusRow("ランク "+r.rank,r.rankBonus)}
-           ${_bonusRow("レインボー",r.rainbow,"rbtext")}
-         </div>`;
+    // プレゼントが個数分ボタンで並ぶ（2列）。受け取ったボタンはその場で「受け取り済み」に変わる
+    const items=q.map(r=>`
+      <button class="pm-item" data-at="${esc(r.at)}" data-total="${r.total}" onclick="claimPresentItem(this)">
+        <img src="icons/present.webp" alt="">
+        <span class="ttl">${esc(_presItemLabel(r))}</span>
+        <span class="amt">+${r.total} XP</span>
+      </button>`).join("");
     m.innerHTML=`<div class="pm-card rainbow">
       <button class="pm-close" onclick="closePresent()">×</button>
-      <img class="pm-img" src="icons/bonus-${_presCat}.webp" alt="">
       <div class="pm-title">${esc(PRES_LABEL[_presCat])}が ${q.length} 個</div>
-      ${body}
-      <button class="pm-btn" onclick="claimPresent()">1個受け取る</button>
+      <div class="pm-sub">タップして受け取ろう</div>
+      <div class="pm-grid">${items}</div>
+      <button class="pm-btn" onclick="closePresent()">とじる</button>
     </div>`;
   }else{
     m.innerHTML=`<div class="pm-card">
@@ -826,17 +833,23 @@ function openPresent(cat){
   m.classList.add("on");
 }
 function closePresent(){document.getElementById("present-modal").classList.remove("on");}
-function claimPresent(){
+function claimPresentItem(btn){
+  if(btn.classList.contains("claimed"))return;
+  const at=btn.dataset.at,total=+btn.dataset.total;
   const st=_presentState();
-  const idx=st.queue.findIndex(x=>x.cat===_presCat);
-  if(idx<0){closePresent();return;}
-  const r=st.queue.splice(idx,1)[0];
-  sfxClaim();
-  addBonus(r.total);
+  const idx=st.queue.findIndex(x=>x.cat===_presCat&&x.at===at&&x.total===total);
+  if(idx<0)return;
+  st.queue.splice(idx,1);
   _savePresent(st);
+  sfxClaim();
+  addBonus(total);
+  btn.classList.add("claimed");
+  btn.querySelector(".amt").textContent="受け取り済み";
   updatePresent();
-  if(st.queue.some(x=>x.cat===_presCat))openPresent(_presCat); else closePresent();
-  renderHome(); // XP・プレゼント状態を更新
+  renderHome(); // XP表示更新（モーダルは開いたまま）
+  const title=document.querySelector("#present-modal .pm-title");
+  const n=presentsAvailable(_presCat);
+  if(title)title.textContent=PRES_LABEL[_presCat]+(n>0?`が ${n} 個`:" 完了！");
 }
 /* PWR=学習済み（1回以上出題）全単語の平均記憶率。時間で低下し復習で上昇 */
 function pwrOverallExact(){const s=loadStats(),ids=Object.keys(s);if(!ids.length)return 0;const now=Date.now();let t=0;ids.forEach(id=>t+=displayMemoryScore(getStat(id,s),now));return t/ids.length;}
@@ -2424,7 +2437,7 @@ function renderRoomCurve(){_curveIdx=curSection;renderCurveCarousel();}
 /* ============================================================ utils ============================================================ */
 function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
 /* バージョン表示（トップページ） */
-const APP_VERSION="v2.37.2 (2026-06-10)";
+const APP_VERSION="v2.38.0 (2026-06-10)";
 (function(){const el=document.getElementById("appver");if(el)el.textContent=APP_VERSION;})();
 getUserId();
 updateDiagnosis();   // 起動時に診断を初期化
