@@ -55,6 +55,7 @@ button{font-family:inherit}
 .qstage{flex:1;display:flex;flex-direction:column;min-height:0}
 .qmain{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:8vh 20px 0;text-align:center}
 .qword{font-size:clamp(34px,9vw,46px);font-weight:800;line-height:1.25;word-break:break-all}
+.qword.ja{font-weight:400}
 /* 単語と選択肢の間に表示する関連画像 */
 .qimg{margin-top:3vh;display:flex;justify-content:center;width:100%}
 .qimg img{width:min(80%,360px);max-height:24vh;object-fit:cover;border:1px solid var(--line);display:block;background:var(--panel)}
@@ -79,15 +80,16 @@ button{font-family:inherit}
 /* 四択は選択肢の色を見せたいので背景は透明。書き取りは比較テキストを読ませるため暗幕を付ける */
 .overlay{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:300;pointer-events:auto;background:transparent}
 .overlay.backdrop{background:rgba(0,0,0,.72)}
+.tap-next{position:absolute;left:0;right:0;bottom:7%;text-align:center;font-size:16px;font-weight:800;color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.6);animation:bob 1.4s ease-in-out infinite}
 /* 大きさ-10%(60→54vw) / 線+20%(1.4→1.68, 1.2→1.44vw) / 縦は5%下へ(-20→-15vh) / 横中央・透明度.6維持 */
 .ovsym{font-size:54vw;line-height:1;font-weight:600;opacity:.6;transform:translateY(-15vh)}
 .ovsym.o{color:var(--red);-webkit-text-stroke:1.68vw var(--red);text-stroke:1.68vw var(--red)}
 .ovsym.x{color:var(--blue);font-weight:400;-webkit-text-stroke:1.44vw var(--blue);text-stroke:1.44vw var(--blue)}
 /* 書き取りの正誤比較：入力=青文字 / 正解=赤文字。問題と選択肢の間（画面中央）に配置 */
-.ovans{position:absolute;left:0;right:0;top:52%;transform:translateY(-50%);text-align:center;padding:0 18px;pointer-events:none}
+.ovans{position:absolute;left:0;right:0;top:30%;transform:translateY(-50%);text-align:center;padding:0 18px;pointer-events:none}
 .ovans .oa-row{margin:8px 0}
 .ovans .oa-lab{color:var(--mute);font-size:11px;font-weight:700;letter-spacing:2px;margin-bottom:2px}
-.ovans .oa-ko{font-size:clamp(30px,8vw,40px);font-weight:800;line-height:1.25;word-break:break-all}
+.ovans .oa-ko{font-size:clamp(38px,10vw,54px);font-weight:800;line-height:1.25;word-break:break-all}
 .ovans .oa-ko.correct{color:var(--red)}
 .ovans .oa-ko.wrong{color:var(--blue)}
 
@@ -281,6 +283,18 @@ button{font-family:inherit}
 }
 .start-button:active{background:rgba(0,0,0,.65)}
 .hv-ver{position:absolute;left:0;right:0;bottom:8px;text-align:center;font-size:11px;color:rgba(255,255,255,.5);z-index:2}
+.hv-settings{position:absolute;left:0;right:0;bottom:28px;text-align:center;font-size:14px;font-weight:800;color:rgba(255,255,255,.92);z-index:3;cursor:pointer;letter-spacing:1px}
+#settings-modal{position:fixed;inset:0;z-index:400;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.55)}
+#settings-modal.on{display:flex}
+.set-card{width:340px;max-width:88vw;background:#fff;color:#1a1a1a;padding:22px;position:relative;border-radius:12px}
+.set-h{font-size:20px;font-weight:900;text-align:center;margin-bottom:16px}
+.set-row{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:12px 4px;cursor:pointer;border-top:1px solid #eee}
+.set-t{font-size:15px;font-weight:800}
+.set-d{font-size:12px;font-weight:700;color:#888;margin-top:2px}
+.set-sw{width:52px;height:30px;border-radius:999px;background:#ccc;position:relative;flex:0 0 auto;transition:background .2s}
+.set-sw.on{background:#00C24E}
+.set-sw span{position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#fff;transition:left .2s}
+.set-sw.on span{left:25px}
 .typebox{text-align:center;cursor:pointer;padding:2px 0}
 .t-code{font-size:42px;font-weight:900;letter-spacing:9px;text-indent:9px}
 .t-char{display:block;margin:14px auto 0;width:116px;height:116px}
@@ -505,6 +519,7 @@ button{font-family:inherit}
       <div class="room-scroll" id="hv-rooms"></div>
       <button class="start-button" onclick="startTest()">スタート</button>
       <div id="status-ov"></div>
+      <div class="hv-settings" onclick="openSettings()">⚙ 設定</div>
       <div class="hv-ver" id="appver"></div>
     </div>
   </div>
@@ -527,6 +542,7 @@ button{font-family:inherit}
 </div>
 <div id="present-modal"></div>
 <div id="calendar-modal"></div>
+<div id="settings-modal"></div>
 
 <script src="words-middle.js"></script>
 <script src="words-images.js"></script>
@@ -1490,7 +1506,7 @@ const IME={
 /* ============================================================ ストレージ（全件保存） ============================================================ */
 const LS_HIST="kwt_history_v1", LS_PERFECT="kwt_perfect_v1", LS_USER="kwt_user_v1",
       LS_STATS="kwt_stats_v1", LS_PROG="kwt_progress_v1", LS_SESS="kwt_session_v1",
-      LS_BONUS="kwt_bonus_v1", LS_PRESENT="kwt_present_v1", LS_CARDS="kwt_cards_v1", LS_LAUNCH="kwt_launch_v1", LS_LASTROOM="kwt_lastroom_v1";
+      LS_BONUS="kwt_bonus_v1", LS_PRESENT="kwt_present_v1", LS_CARDS="kwt_cards_v1", LS_LAUNCH="kwt_launch_v1", LS_LASTROOM="kwt_lastroom_v1", LS_SETTINGS="kwt_settings_v1";
 function getUserId(){let u=localStorage.getItem(LS_USER);if(!u){u="u-"+Date.now().toString(36)+Math.random().toString(36).slice(2,7);localStorage.setItem(LS_USER,u);}return u;}
 function loadHistory(){try{return JSON.parse(localStorage.getItem(LS_HIST)||"[]");}catch(e){return[];}}
 function saveAnswer(rec){const h=loadHistory();h.push(rec);localStorage.setItem(LS_HIST,JSON.stringify(h));_histIdxCache=null;}
@@ -1902,7 +1918,7 @@ function renderQuestion(){
   if(q.type==="kj"||q.type==="jk"){
     const display=q.type==="kj"?q.word.ko:q.word.ja;
     stage.innerHTML=`
-      <div class="qmain"><div class="qword">${esc(display)}</div></div>
+      <div class="qmain"><div class="qword${q.type==="jk"?" ja":""}">${esc(display)}</div></div>
       <div class="qbottom">
         <div class="choices">${q.choices.map(c=>`<button class="choice" data-v="${esc(c)}" onclick="pick(this.dataset.v)">${esc(c)}</button>`).join("")}</div>
         <button class="unknown" onclick="submit('unknown','')">わからない</button>
@@ -1917,7 +1933,7 @@ function renderQuestion(){
     q.hintText=hint?([...q.word.ko].find(ch=>/[가-힣]/.test(ch))||[...q.word.ko.trim()][0]):null;
     const hintHTML=hint?`<div class="whint">ヒント：<b>${esc(q.hintText)}</b></div>`:"";
     stage.innerHTML=`
-      <div class="qmain" style="flex:0 0 auto;padding-top:5vh;min-height:24vh"><div class="qword">${esc(q.word.ja)}</div>${hintHTML}</div>
+      <div class="qmain" style="flex:0 0 auto;padding-top:5vh;min-height:24vh"><div class="qword ja">${esc(q.word.ja)}</div>${hintHTML}</div>
       <div class="winput" id="winput"></div>
       ${keyboardHTML()}`;
     refreshInput();
@@ -2034,9 +2050,17 @@ function showOverlay(status,q,userAnswer){
   }else{
     highlightChoices(q,status,userAnswer); // 実際の選択肢ボタンを色分け（赤=正解 / 青=選んだ誤答）
   }
+  const tap=loadSettings().tapAdvance;
+  if(tap)inner+='<div class="tap-next">タップで次へ ›</div>';
   ov.innerHTML=inner;
   document.body.appendChild(ov);
-  ovTimer=setTimeout(()=>{ov.remove();afterAnswer();},isCorrect?1000:2000);
+  if(tap){
+    ov.style.cursor="pointer";
+    const go=()=>{if(ov._done)return;ov._done=true;ov.remove();afterAnswer();};
+    ov.addEventListener("click",go);
+  }else{
+    ovTimer=setTimeout(()=>{ov.remove();afterAnswer();},isCorrect?1000:2000);
+  }
 }
 /* 四択：正解の選択肢を赤、ユーザーが選んだ誤答を青で強調。その他は暗い灰色のまま */
 function highlightChoices(q,status,userAnswer){
@@ -2471,9 +2495,27 @@ function renderRoomCurve(){_curveIdx=curSection;renderCurveCarousel();}
 /* ============================================================ utils ============================================================ */
 function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
 /* バージョン表示（トップページ） */
-const APP_VERSION="v2.40.2 (2026-06-10)";
+const APP_VERSION="v2.41.0 (2026-06-10)";
 (function(){const el=document.getElementById("appver");if(el)el.textContent=APP_VERSION;})();
 getUserId();
+/* 設定 */
+function loadSettings(){try{return Object.assign({tapAdvance:false},JSON.parse(localStorage.getItem(LS_SETTINGS)||"{}"));}catch(e){return{tapAdvance:false};}}
+function saveSettings(o){localStorage.setItem(LS_SETTINGS,JSON.stringify(o));}
+function openSettings(){
+  const st=loadSettings();
+  const m=document.getElementById("settings-modal");
+  m.innerHTML=`<div class="set-card">
+    <button class="pm-close" onclick="closeSettings()">×</button>
+    <div class="set-h">設定</div>
+    <div class="set-row" onclick="toggleSetting('tapAdvance')">
+      <div><div class="set-t">四択回答後の進み方</div><div class="set-d">${st.tapAdvance?"タップで次へ":"自動で次へ"}</div></div>
+      <div class="set-sw ${st.tapAdvance?'on':''}"><span></span></div>
+    </div>
+  </div>`;
+  m.classList.add("on");
+}
+function closeSettings(){document.getElementById("settings-modal").classList.remove("on");}
+function toggleSetting(key){const st=loadSettings();st[key]=!st[key];saveSettings(st);openSettings();}
 /* 前回開いていたROOMを起動時に復元 */
 function saveLastRoom(){try{localStorage.setItem(LS_LASTROOM,JSON.stringify({level:curLevel,section:curSection}));}catch(e){}}
 (function restoreLastRoom(){
