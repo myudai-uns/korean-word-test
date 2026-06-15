@@ -55,7 +55,7 @@ button{font-family:inherit}
 .qstage{flex:1;display:flex;flex-direction:column;min-height:0}
 .qmain{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:8vh 20px 0;text-align:center}
 .qword{font-size:clamp(34px,9vw,46px);font-weight:800;line-height:1.25;word-break:break-all}
-.qword.ja{font-weight:400}
+.qword.ja{font-weight:600}
 /* 単語と選択肢の間に表示する関連画像 */
 .qimg{margin-top:3vh;display:flex;justify-content:center;width:100%}
 .qimg img{width:min(80%,360px);max-height:24vh;object-fit:cover;border:1px solid var(--line);display:block;background:var(--panel)}
@@ -202,6 +202,7 @@ button{font-family:inherit}
 .home-wrap.status .reward-rail,.home-wrap.hiderail .reward-rail{opacity:0;pointer-events:none}
 .rr-btn{width:68px;height:68px;border:none;background:rgba(255,255,255,.18);border-radius:50%;cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center;position:relative}
 .rr-btn img{width:86%;height:86%;object-fit:contain}
+.rr-set{font-size:34px;color:#fff;line-height:1}
 .rr-btn.rb{animation:rbglow 1.4s linear infinite}
 .rr-btn.bob{animation:bob 1.6s ease-in-out infinite}
 @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
@@ -283,7 +284,6 @@ button{font-family:inherit}
 }
 .start-button:active{background:rgba(0,0,0,.65)}
 .hv-ver{position:absolute;left:0;right:0;bottom:8px;text-align:center;font-size:11px;color:rgba(255,255,255,.5);z-index:2}
-.hv-settings{position:absolute;left:0;right:0;bottom:28px;text-align:center;font-size:14px;font-weight:800;color:rgba(255,255,255,.92);z-index:3;cursor:pointer;letter-spacing:1px}
 #settings-modal{position:fixed;inset:0;z-index:400;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.55)}
 #settings-modal.on{display:flex}
 .set-card{width:340px;max-width:88vw;background:#fff;color:#1a1a1a;padding:22px;position:relative;border-radius:12px}
@@ -502,6 +502,7 @@ button{font-family:inherit}
       <div class="hv-level" id="hv-level" onclick="enterStatusMode()" style="cursor:pointer">Lv.<span>1</span></div>
       <div class="hv-code" id="hv-code" onclick="enterStatusMode()">----</div>
       <div class="reward-rail">
+        <button class="rr-btn rr-set" id="set-btn" onclick="openSettings()">⚙</button>
         <button class="rr-btn" id="cal-btn" onclick="openCalendar()"><img src="icons/calendar.webp" alt="カレンダー"></button>
         <button class="rr-btn" id="rr-daily" onclick="openPresent('daily')"><img src="icons/bonus-daily.webp" alt="毎日"><span class="rr-badge" id="pb-daily" style="display:none"></span></button>
         <button class="rr-btn" id="rr-rank" onclick="openPresent('rank')"><img src="icons/bonus-rank.webp" alt="ランク"><span class="rr-badge" id="pb-rank" style="display:none"></span></button>
@@ -519,7 +520,6 @@ button{font-family:inherit}
       <div class="room-scroll" id="hv-rooms"></div>
       <button class="start-button" onclick="startTest()">スタート</button>
       <div id="status-ov"></div>
-      <div class="hv-settings" onclick="openSettings()">⚙ 設定</div>
       <div class="hv-ver" id="appver"></div>
     </div>
   </div>
@@ -2495,7 +2495,7 @@ function renderRoomCurve(){_curveIdx=curSection;renderCurveCarousel();}
 /* ============================================================ utils ============================================================ */
 function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
 /* バージョン表示（トップページ） */
-const APP_VERSION="v2.41.0 (2026-06-10)";
+const APP_VERSION="v2.41.1 (2026-06-15)";
 (function(){const el=document.getElementById("appver");if(el)el.textContent=APP_VERSION;})();
 getUserId();
 /* 設定 */
