@@ -2512,7 +2512,7 @@ function renderRoomCurve(){_curveIdx=curSection;renderCurveCarousel();}
 /* ============================================================ utils ============================================================ */
 function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
 /* バージョン表示（トップページ） */
-const APP_VERSION="v2.44.1 (2026-06-18)";
+const APP_VERSION="v2.45.0 (2026-06-18)";
 (function(){const el=document.getElementById("appver");if(el)el.textContent=APP_VERSION;})();
 getUserId();
 /* ============================================================ 収益化（投げ銭＋AdSense）。IDを入れるまで何も表示・読込しない ============================================================ */
@@ -2531,6 +2531,8 @@ function ensureAdsense(){
   sc.src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client="+MONETIZE.adsenseClient;
   document.head.appendChild(sc);
 }
+// 起動時にAdSenseを読み込む（Auto Adsをオンにしていればサイト全体に自動配置される）
+if(MONETIZE.adsenseClient)ensureAdsense();
 /* 指定要素にレスポンシブ広告を描画（IDが揃っているときだけ） */
 function adSlotHTML(){
   if(!MONETIZE.adsenseClient||!MONETIZE.adsenseSlot)return "";

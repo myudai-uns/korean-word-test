@@ -11,3 +11,4 @@ _*.js
 _*.py
 
 PROMOTION.md
+DEPLOY_CLOUDFLARE.md
