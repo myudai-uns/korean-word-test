@@ -210,13 +210,15 @@ button{font-family:inherit}
 .home-toast.out{opacity:0;transition:opacity .45s ease}
 @keyframes toastin{from{opacity:0;transform:translateX(-50%) translateY(-12px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
 /* 今日学ぶべき単語の帯：スタートボタン上に半透明白、カードが左→右に流れる */
-.today-band{position:absolute;left:0;top:858px;width:602px;height:134px;background:rgba(255,255,255,.35);z-index:1;overflow:hidden;display:flex;align-items:center;pointer-events:none;opacity:1;transition:opacity .3s ease}
+.today-band{position:absolute;left:0;top:858px;width:602px;height:134px;background:rgba(255,255,255,.35);z-index:1;overflow:visible;pointer-events:none;opacity:1;transition:opacity .3s ease}
+.tb-clip{position:absolute;left:0;top:-52px;width:602px;height:186px;overflow:hidden;display:flex;align-items:flex-end} /* 画像の上はみ出し(52px)ぶん上に広いクリップ層。横は画面幅でクリップ */
 .home-wrap.status .today-band,.home-wrap.hiderail .today-band{opacity:0}
-.tb-track{display:flex;animation:tbflow 30s linear infinite;will-change:transform;backface-visibility:hidden}
+.tb-track{display:flex;animation:tbflow 30s linear infinite;will-change:transform;backface-visibility:hidden;margin-bottom:8px}
 .tb-group{display:flex;gap:12px;padding:0 6px;flex:0 0 auto} /* 同一グループ2連結で-50%＝ちょうど1周＝つなぎ目ゼロ */
 @keyframes tbflow{from{transform:translateX(0)}to{transform:translateX(-50%)}} /* 右→左 */
-.tb-card{flex:0 0 auto;background:rgba(255,255,255,.92);border-radius:14px;padding:8px 14px;display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:118px}
-.tb-img{width:60px;height:60px;object-fit:contain;display:block}
+.tb-card{position:relative;flex:0 0 auto;background:rgba(255,255,255,.92);border-radius:14px;padding:8px 14px;display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:118px;pointer-events:auto;cursor:pointer}
+.tb-imgspace{width:60px;height:60px;flex:0 0 auto} /* カードサイズは従来どおり（旧60px画像ぶんの席だけ確保） */
+.tb-img{position:absolute;top:-52px;left:50%;transform:translateX(-50%);width:120px;height:120px;object-fit:contain;display:block;filter:drop-shadow(0 3px 6px rgba(0,0,0,.2))} /* 2倍サイズ・カード上部からはみ出すポップアウト */
 .tb-ko{font-size:21px;font-weight:900;color:#222;line-height:1.15}
 .tb-ja{font-size:12px;font-weight:700;color:#666;margin-top:1px;max-width:150px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 /* 単語一覧モード：スワイプ連動（--lift/--pはhome-wrapに設定） */
@@ -576,7 +578,7 @@ button{font-family:inherit}
       <div id="hv-pwrdown"></div>
       </div>
       <div class="room-scroll" id="hv-rooms"></div>
-      <div class="today-band" id="today-band" style="display:none"><div class="tb-track" id="tb-track"></div></div><!-- 中身が入るまで非表示（空の白帯チラ見え防止） -->
+      <div class="today-band" id="today-band" style="display:none"><div class="tb-clip"><div class="tb-track" id="tb-track"></div></div></div><!-- 中身が入るまで非表示（空の白帯チラ見え防止） -->
       <button class="home-side-btn hsb-left" onclick="renderRoomCurve()" aria-label="忘却曲線"><img src="images-thumb/0912.webp" alt="忘却曲線"></button>
       <button class="start-button" onclick="startTest()">スタート</button>
       <button class="home-side-btn hsb-right" onclick="enterListMode()" aria-label="単語帳"><img src="images-thumb/1290.webp" alt="単語帳"></button>
@@ -1261,7 +1263,7 @@ function buildTodayBand(){
     picks=picks.concat(all.filter(x=>!ids.has(x.w.id)).sort((a,b)=>b.ps-a.ps).slice(0,12-picks.length));
   }
   if(!picks.length){band.style.display="none";_tbKey="";return;}
-  band.style.display="flex";
+  band.style.display="block";
   const key=picks.map(x=>x.w.id).join(",");
   if(key===_tbKey&&track.childElementCount)return; // 内容が同じなら作り直さない（アニメーションを途切れさせない）
   _tbKey=key;
@@ -1269,8 +1271,8 @@ function buildTodayBand(){
   const list=picks.slice();
   for(let i=0;list.length<8;i++)list.push(picks[i%picks.length]);
   const cards=list.map(x=>{
-    const img=(typeof WORD_IMG!=="undefined"&&WORD_IMG[x.w.ko])?`<img class="tb-img" src="${WORD_IMG[x.w.ko]}" loading="lazy" alt="">`:"";
-    return `<div class="tb-card">${img}<div class="tb-ko">${esc(x.w.ko)}</div><div class="tb-ja">${esc(x.w.ja)}</div></div>`;
+    const img=(typeof WORD_IMG!=="undefined"&&WORD_IMG[x.w.ko])?`<span class="tb-imgspace"></span><img class="tb-img" src="${WORD_IMG[x.w.ko]}" loading="lazy" alt="">`:"";
+    return `<div class="tb-card" onclick="renderWordDetail(${x.w.id},'room')">${img}<div class="tb-ko">${esc(x.w.ko)}</div><div class="tb-ja">${esc(x.w.ja)}</div></div>`;
   }).join("");
   track.innerHTML=`<div class="tb-group">${cards}</div><div class="tb-group">${cards}</div>`; // 同一グループ2連結
 }
@@ -2668,7 +2670,7 @@ function renderRoomCurve(){_curveIdx=curSection;renderCurveCarousel();}
 /* ============================================================ utils ============================================================ */
 function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
 /* バージョン表示（トップページ） */
-const APP_VERSION="v2.54 (2026-07-19)";
+const APP_VERSION="v2.54.1 (2026-07-19)";
 (function(){const el=document.getElementById("appver");if(el)el.textContent=APP_VERSION;})();
 getUserId();
 /* ============================================================ 収益化（投げ銭＋AdSense）。IDを入れるまで何も表示・読込しない ============================================================ */
