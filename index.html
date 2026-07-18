@@ -161,7 +161,7 @@ button{font-family:inherit}
 .avatar-image{width:100%;height:100%;object-fit:contain;padding:12px;box-sizing:border-box}
 .hv-level{position:absolute;left:176px;top:44px;display:flex;align-items:baseline;gap:3px;line-height:1;z-index:2;font-size:20px}
 .hv-level span{font-size:38px}
-.hv-code{position:absolute;right:47px;top:42px;font-size:40px;letter-spacing:1px;line-height:1;cursor:pointer;z-index:2;display:flex;align-items:center;gap:5px}
+.hv-code{position:absolute;right:47px;top:41px;font-size:40px;letter-spacing:1px;line-height:1;cursor:pointer;z-index:2;display:flex;align-items:center;gap:5px} /* レベル表記と同じ高さに(1px上) */
 .streak-fire{width:50px;height:50px;object-fit:contain;display:block}
 #hv-pwrdown{position:absolute;left:166px;top:153px;width:403px;text-align:center;font-size:16px;font-weight:700;color:#fff;z-index:2;pointer-events:none;text-shadow:0 1px 3px rgba(0,0,0,.5)}
 .home-side-btn img{width:74%;height:74%;object-fit:contain;pointer-events:none;display:block;margin:auto}
@@ -524,6 +524,7 @@ button{font-family:inherit}
 .wdetail-head .ja{color:#FFFFFF;font-size:26px;font-weight:800;margin-top:2px}
 </style>
 <!-- アクセス解析: Cloudflare Web Analytics（プロキシ経由で自動計測。手動ビーコン不要） -->
+<script src="ga.js"></script>
 </head>
 <body>
 <noscript>
@@ -1965,7 +1966,7 @@ function showCountdown(cb){
     n--;
     if(n<=0){clearInterval(timer);cb();return;}
     draw();
-  },800);
+  },1000);
 }
 
 function curLimit(){return state.questions[state.idx].type==="w"?20:10;}
@@ -2235,6 +2236,8 @@ function finishTest(){
     improved:changes.filter(c=>c.after>c.before).length,changes});
   // タイプ診断を再計算し外枠色を更新（テスト終了時のみ。回答中は更新しない）
   const dg=updateDiagnosis();
+  _lastResult={total:totalDisp,rank,nCorrect,code:(dg&&dg.diag&&dg.diag.code)||""};
+  track("test_complete",{score:totalDisp,rank:rank,correct:nCorrect});
   const typeUpd=(dg.changed&&dg.prevCode&&dg.prevCode!==dg.diag.code)
     ?`<div class="type-upd">WORD TYPE UPDATED　<b>${esc(dg.prevCode)} → ${esc(dg.diag.code)}</b></div>`:"";
   const SYM={correct:["○","#FF3B3B"],incorrect:["×","#2F6FE0"],unknown:["－","rgba(255,255,255,.75)"],timeout:["△","#DFB10F"]};
@@ -2267,10 +2270,12 @@ function finishTest(){
       <tbody>${rows}</tbody></table>
     </div>
     <div class="res-btns">
+      <button class="btn dark full" onclick="shareResult()" style="border:1px solid var(--gold);color:var(--gold)">&#120143; 結果をシェアして友達に挑戦</button>
       <button class="btn dark" onclick="startTest()">もう一度挑戦する</button>
       <button class="btn dark" onclick="renderRoomCurve()">PWRメータを見る</button>
       <button class="btn line full" onclick="show('s-home')">ホームに戻る</button>
       ${donateBtnHTML('btn line full')}
+      ${installBtnHTML()}
     </div>
     ${adSlotHTML()}
    </div>`;
@@ -2590,7 +2595,7 @@ function renderRoomCurve(){_curveIdx=curSection;renderCurveCarousel();}
 /* ============================================================ utils ============================================================ */
 function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
 /* バージョン表示（トップページ） */
-const APP_VERSION="v2.51 (2026-07-19)";
+const APP_VERSION="v2.51.1 (2026-07-19)";
 (function(){const el=document.getElementById("appver");if(el)el.textContent=APP_VERSION;})();
 getUserId();
 /* ============================================================ 収益化（投げ銭＋AdSense）。IDを入れるまで何も表示・読込しない ============================================================ */
@@ -2642,7 +2647,37 @@ function initFooterAd(){
 initFooterAd();
 function donateBtnHTML(cls){
   if(!MONETIZE.donateUrl)return "";
-  return `<a class="${cls||'btn line full'}" href="${MONETIZE.donateUrl}" target="_blank" rel="noopener" style="text-decoration:none;display:flex;align-items:center;justify-content:center">${MONETIZE.donateLabel}</a>`;
+  return `<a class="${cls||'btn line full'}" href="${MONETIZE.donateUrl}" target="_blank" rel="noopener" onclick="track(&quot;donate_click&quot;)" style="text-decoration:none;display:flex;align-items:center;justify-content:center">${MONETIZE.donateLabel}</a>`;
+}
+/* ===== シェア・PWA誘導・計測フック ===== */
+const track=window.track||function(){};
+let _lastResult=null,_bipEvt=null;
+window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();_bipEvt=e;});
+function shareResult(){
+  const r=_lastResult;if(!r)return;
+  track("share_click",{score:r.total,rank:r.rank});
+  const lines=[`韓国語単語テスト、12問やって${r.total}点・${r.rank}ランクでした🇰🇷`];
+  if(r.code)lines.push(`暗記タイプ診断は「${r.code}」`);
+  lines.push(r.rank==="S"?"Sランク、あなたも取れる？（無料・登録不要）":"あなたは何点取れる？（無料・登録不要）");
+  lines.push("#韓国語 #韓国語勉強");
+  lines.push("https://k-tango.com/?utm_source=share&utm_medium=social&utm_campaign=result");
+  window.open("https://twitter.com/intent/tweet?text="+encodeURIComponent(lines.join("\n")),"_blank","noopener");
+}
+function installBtnHTML(){
+  if(window.matchMedia&&window.matchMedia("(display-mode: standalone)").matches)return "";
+  if(navigator.standalone)return "";
+  const ios=/iPhone|iPad|iPod/.test(navigator.userAgent);
+  if(!_bipEvt&&!ios)return "";
+  return `<button class="btn line full" onclick="promptInstall()">📲 ホーム画面に追加して毎日1回</button>`;
+}
+function promptInstall(){
+  track("pwa_prompt",{});
+  if(_bipEvt){_bipEvt.prompt();_bipEvt=null;return;}
+  const ov=document.createElement("div");
+  ov.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:9999;display:flex;align-items:center;justify-content:center;padding:24px";
+  ov.innerHTML=`<div style="background:#222;color:#fff;padding:20px;max-width:320px;font-size:14px;line-height:1.8">Safariの共有ボタン（<b>&#x2191;</b> のアイコン）→「ホーム画面に追加」で、アプリとしてすぐ開けるようになります。<br><br><button class="btn dark" style="width:100%" onclick="this.closest(&quot;div&quot;).parentElement.parentElement.remove()">閉じる</button></div>`;
+  ov.addEventListener("click",e=>{if(e.target===ov)ov.remove();});
+  document.body.appendChild(ov);
 }
 /* 設定 */
 function loadSettings(){try{return Object.assign({tapAdvance:false},JSON.parse(localStorage.getItem(LS_SETTINGS)||"{}"));}catch(e){return{tapAdvance:false};}}
