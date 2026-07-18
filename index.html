@@ -161,7 +161,7 @@ button{font-family:inherit}
 .avatar-image{width:100%;height:100%;object-fit:contain;padding:12px;box-sizing:border-box}
 .hv-level{position:absolute;left:176px;top:44px;display:flex;align-items:baseline;gap:3px;line-height:1;z-index:2;font-size:20px}
 .hv-level span{font-size:38px}
-.hv-code{position:absolute;right:47px;top:41px;font-size:40px;letter-spacing:1px;line-height:1;cursor:pointer;z-index:2;display:flex;align-items:center;gap:5px} /* レベル表記と同じ高さに(1px上) */
+.hv-code{position:absolute;right:47px;top:39px;font-size:40px;letter-spacing:1px;line-height:1;cursor:pointer;z-index:2;display:flex;align-items:center;gap:5px} /* 数字上端がLv.数字(top44)と揃う位置：39+(50-40)/2=44 */
 .streak-fire{width:50px;height:50px;object-fit:contain;display:block}
 #hv-pwrdown{position:absolute;left:166px;top:153px;width:403px;text-align:center;font-size:16px;font-weight:700;color:#fff;z-index:2;pointer-events:none;text-shadow:0 1px 3px rgba(0,0,0,.5)}
 .home-side-btn img{width:74%;height:74%;object-fit:contain;pointer-events:none;display:block;margin:auto}
@@ -557,7 +557,7 @@ button{font-family:inherit}
   <div class="screen on" id="s-home">
     <div class="home-wrap" id="homewrap">
       <div class="home-head">
-      <div class="avatar-circle" onclick="enterStatusMode()"><img class="avatar-image" id="hv-char" src="characters/analyzing.svg" alt=""></div>
+      <div class="avatar-circle" onclick="renderTypeDetail()"><img class="avatar-image" id="hv-char" src="characters/analyzing.svg" alt=""></div><!-- アイコンタップで16TYPE詳細へ -->
       <div class="hv-level" id="hv-level" onclick="enterStatusMode()" style="cursor:pointer">Lv.<span>1</span></div>
       <div class="hv-code" id="hv-code" onclick="enterStatusMode()"></div>
       <div class="reward-rail">
@@ -2673,7 +2673,7 @@ function renderRoomCurve(){_curveIdx=curSection;renderCurveCarousel();}
 /* ============================================================ utils ============================================================ */
 function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
 /* バージョン表示（トップページ） */
-const APP_VERSION="v2.55 (2026-07-19)";
+const APP_VERSION="v2.55.1 (2026-07-19)";
 (function(){const el=document.getElementById("appver");if(el)el.textContent=APP_VERSION;})();
 getUserId();
 /* ============================================================ 収益化（投げ銭＋AdSense）。IDを入れるまで何も表示・読込しない ============================================================ */
