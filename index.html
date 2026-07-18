@@ -209,7 +209,7 @@ button{font-family:inherit}
 .today-band{position:absolute;left:0;top:888px;width:602px;height:104px;background:rgba(255,255,255,.35);z-index:1;overflow:hidden;display:flex;align-items:center;pointer-events:none;opacity:1;transition:opacity .3s ease}
 .home-wrap.status .today-band,.home-wrap.hiderail .today-band{opacity:0}
 .tb-track{display:flex;gap:12px;padding-left:12px;animation:tbflow 30s linear infinite;will-change:transform}
-@keyframes tbflow{from{transform:translateX(-50%)}to{transform:translateX(0)}}
+@keyframes tbflow{from{transform:translateX(0)}to{transform:translateX(-50%)}} /* 右→左 */
 .tb-card{flex:0 0 auto;background:rgba(255,255,255,.92);border-radius:14px;padding:10px 16px;display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:110px}
 .tb-ko{font-size:26px;font-weight:900;color:#222;line-height:1.15}
 .tb-ja{font-size:14px;font-weight:700;color:#666;margin-top:2px;max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -937,18 +937,27 @@ function claimPresentItem(btn){
 /* PWR=学習済み（1回以上出題）全単語の平均記憶率。時間で低下し復習で上昇 */
 function pwrOverallExact(){const s=loadStats(),ids=Object.keys(s);if(!ids.length)return 0;const now=Date.now();let t=0;ids.forEach(id=>t+=displayMemoryScore(getStat(id,s),now));return t/ids.length;}
 function pwrOverallAt(ms){const s=loadStats(),ids=Object.keys(s);if(!ids.length)return 0;let t=0;ids.forEach(id=>t+=displayMemoryScore(getStat(id,s),ms));return t/ids.length;}
+/* PWR表示は「1回だけ実測→固定速度で直線減算」の決め打ち方式（毎0.3秒の全単語再計算をやめ計算コスト削減） */
+let _pwrT0=0,_pwrBase=0,_pwrRate=0;
+function calibratePwr(){
+  _pwrBase=pwrOverallExact();
+  _pwrRate=Math.max(0,(_pwrBase-pwrOverallAt(Date.now()+3600000))/3600); // %/秒（1時間先との差から一定速度を決める）
+  _pwrT0=Date.now();
+}
 function updatePwrFine(){
   const num=document.getElementById("hv-pwrval");if(!num)return;
-  const v=pwrOverallExact();
+  if(!_pwrT0)calibratePwr();
+  const v=Math.max(0,_pwrBase-_pwrRate*(Date.now()-_pwrT0)/1000);
   num.textContent=v.toFixed(3)+"%";                 // 元のメーターを12.123のように3桁小数で（みるみる減るのが見える）
   const f=document.getElementById("hv-pwrfill");if(f)f.style.width=v+"%";
   const dn=document.getElementById("hv-pwrdown");
   if(dn){
-    const perSec=(v-pwrOverallAt(Date.now()+3600000))/3600; // 1時間後との差から毎秒の減少率を算出
-    dn.textContent=perSec>0?`PWRが0.001%減るまで あと${fmtSecJP(0.001/perSec)}`:"PWRは安定しています";
+    if(_pwrRate>0){
+      const cycle=0.001/_pwrRate, into=((Date.now()-_pwrT0)/1000)%cycle;
+      dn.textContent=`PWRが0.001%減るまで あと${Math.max(1,Math.ceil(cycle-into))}秒`; // 整数秒で毎秒カウントダウン
+    }else dn.textContent="PWRは安定しています";
   }
 }
-function fmtSecJP(s){if(!isFinite(s)||s<0)return"—";return(s<100?s.toFixed(1):String(Math.round(s)))+"秒";}
 setInterval(()=>{const h=document.getElementById("s-home");if(h&&h.classList.contains("on"))updatePwrFine();},300);
 function pwrOverall(){
   const s=loadStats(),ids=Object.keys(s);
@@ -1214,6 +1223,7 @@ function renderHome(){
   scaleHome();
   updatePresent();
   checkAchievements();
+  calibratePwr(); // ホーム表示のたびに実測し直し、以降は固定速度で減算
   updatePwrFine();
 }
 
@@ -2622,7 +2632,7 @@ function renderRoomCurve(){_curveIdx=curSection;renderCurveCarousel();}
 /* ============================================================ utils ============================================================ */
 function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
 /* バージョン表示（トップページ） */
-const APP_VERSION="v2.52 (2026-07-19)";
+const APP_VERSION="v2.52.1 (2026-07-19)";
 (function(){const el=document.getElementById("appver");if(el)el.textContent=APP_VERSION;})();
 getUserId();
 /* ============================================================ 収益化（投げ銭＋AdSense）。IDを入れるまで何も表示・読込しない ============================================================ */
