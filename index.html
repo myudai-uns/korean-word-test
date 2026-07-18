@@ -28,7 +28,7 @@
 <meta name="twitter:image" content="https://k-tango.com/ogp.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>한국어 단어 테스트</title>
+<title>k-tango（ケータンゴ）｜韓国語単語をゲーム感覚で覚える無料アプリ・TOPIK単語帳</title>
 <style>
 /* LINE Seed JP（公式配布woff2を同梱） */
 @font-face{font-family:"LINESeedJP";src:url("fonts/LINESeedJP-Rg.woff2") format("woff2");font-weight:400;font-display:swap}
@@ -519,6 +519,13 @@ button{font-family:inherit}
 <!-- アクセス解析: Cloudflare Web Analytics（プロキシ経由で自動計測。手動ビーコン不要） -->
 </head>
 <body>
+<noscript>
+  <div style="max-width:640px;margin:40px auto;padding:0 20px;font-family:sans-serif;line-height:1.9">
+    <h1>k-tango（ケータンゴ）｜韓国語単語テスト</h1>
+    <p>k-tangoは、TOPIK初級・中級の韓国語単語 全4,333語をゲーム感覚で覚えられる無料の学習アプリです。四択クイズ・ハングル書き取り・単語カード図鑑・忘却曲線による復習提案などの機能があります。ご利用にはJavaScriptを有効にしてください。</p>
+    <p><a href="learn/">韓国語単語帳一覧（全単語をカナ読み付きで公開）</a>／<a href="about.html">このアプリについて</a>／<a href="privacy.html">プライバシーポリシー</a></p>
+  </div>
+</noscript>
 <div class="app" id="app">
 
   <!-- HOME（602×1178基準の絶対配置・比例スケール） -->
@@ -1148,7 +1155,10 @@ function scaleHome(){
   const padV=cs?((parseFloat(cs.paddingTop)||0)+(parseFloat(cs.paddingBottom)||0)):0;
   // iOS Safariの下部ツールバー(フッター)を考慮: visualViewportの実高さ−安全マージン12px
   const vvh=(window.visualViewport&&window.visualViewport.height)||window.innerHeight||1178;
-  const availH=Math.max(300,vvh-padV-12);
+  // 広告フッター表示中はその高さ分だけ縮めて、スタートボタンが隠れないようにする
+  const adf=document.getElementById("ad-footer");
+  const adH=(adf&&document.body.classList.contains("has-adfooter"))?adf.offsetHeight:0;
+  const availH=Math.max(300,vvh-padV-12-adH);
   const appW=app?app.clientWidth:Math.min(window.innerWidth||602,602);
   const s=Math.min(appW/602,availH/1178,1);
   el.style.transform=`scale(${s})`; // #s-homeのjustify-content:center+origin:top centerで水平中央は自動
@@ -2537,7 +2547,8 @@ const MONETIZE={
   donateUrl:"https://ko-fi.com/ktango",  // Ko-fi 投げ銭ページ
   donateLabel:"☕ 応援する（投げ銭）",
   adsenseClient:"ca-pub-7581865183013796",  // YudaiMikami7 / k-tango
-  adsenseSlot:""     // 例: "1234567890"（広告ユニットのスロットID）
+  adsenseSlot:"",    // 結果画面など任意枠のスロットID（例: "1234567890"）
+  footerSlot:""      // 画面下固定フッター広告のスロットID（審査通過後にAdSenseで作成して設定）
 };
 let _adsLoaded=false;
 function ensureAdsense(){
@@ -2559,6 +2570,25 @@ function activateAds(root){
   ensureAdsense();
   try{(root||document).querySelectorAll(".adsbygoogle:not([data-done])").forEach(el=>{el.setAttribute("data-done","1");(window.adsbygoogle=window.adsbygoogle||[]).push({});});}catch(e){}
 }
+/* 画面下部の固定広告フッター：広告が実際に配信されたときだけ表示し、
+   その高さ分scaleHomeでアプリを縮小してスタートボタン等が隠れないようにする */
+function initFooterAd(){
+  if(!MONETIZE.adsenseClient||!MONETIZE.footerSlot)return;
+  const css=document.createElement("style");
+  css.textContent="#ad-footer{position:fixed;left:0;right:0;bottom:0;z-index:900;display:none;justify-content:center;align-items:center;background:#fff;box-shadow:0 -2px 8px rgba(0,0,0,.15);padding-bottom:env(safe-area-inset-bottom)}body.has-adfooter #ad-footer{display:flex}";
+  document.head.appendChild(css);
+  const f=document.createElement("div");f.id="ad-footer";
+  f.innerHTML=`<ins class="adsbygoogle" style="display:inline-block;width:100%;max-width:728px;height:50px" data-ad-client="${MONETIZE.adsenseClient}" data-ad-slot="${MONETIZE.footerSlot}"></ins>`;
+  document.body.appendChild(f);
+  ensureAdsense();
+  const ins=f.querySelector("ins");
+  try{(window.adsbygoogle=window.adsbygoogle||[]).push({});}catch(e){}
+  new MutationObserver(()=>{
+    document.body.classList.toggle("has-adfooter",ins.getAttribute("data-ad-status")==="filled");
+    scaleHome();
+  }).observe(ins,{attributes:true,attributeFilter:["data-ad-status"]});
+}
+initFooterAd();
 function donateBtnHTML(cls){
   if(!MONETIZE.donateUrl)return "";
   return `<a class="${cls||'btn line full'}" href="${MONETIZE.donateUrl}" target="_blank" rel="noopener" style="text-decoration:none;display:flex;align-items:center;justify-content:center">${MONETIZE.donateLabel}</a>`;
@@ -2578,6 +2608,7 @@ function openSettings(){
     </div>
     ${MONETIZE.donateUrl?`<div class="set-row" style="justify-content:center;border-top:1px solid #eee">${donateBtnHTML('btn dark full')}</div>`:""}
     <div class="set-row" style="justify-content:center;gap:18px;border-top:1px solid #eee;font-size:13px;font-weight:700">
+      <a href="learn/" style="color:#666;text-decoration:none">単語帳一覧</a>
       <a href="about.html" style="color:#666;text-decoration:none">このアプリについて</a>
       <a href="privacy.html" style="color:#666;text-decoration:none">プライバシーポリシー</a>
     </div>
