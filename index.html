@@ -279,7 +279,8 @@ button{font-family:inherit}
 .slide-img,.room-ph{opacity:calc(1 - var(--p,0));transition:opacity .35s ease,transform .35s ease} /* 写真はフェードアウト */
 .home-wrap.dragging .slide-inner,.home-wrap.dragging .home-head,.home-wrap.dragging .slide-img,.home-wrap.dragging .room-ph,.home-wrap.dragging .room-scroll,.home-wrap.dragging .start-button{transition:none}
 .slide-list{position:absolute;left:24px;top:344px;width:554px;height:604px;overflow-y:auto;background:rgba(0,0,0,.35);scrollbar-width:none;
-  opacity:var(--p,1);transition:opacity .35s ease} /* 入場はJSでフェードイン、下スワイプは--p連動でフェードアウト */
+  opacity:var(--p,1);transition:opacity .35s ease,height .35s ease} /* 入場はJSでフェードイン、下スワイプは--p連動でフェードアウト */
+.home-wrap.hiderail .slide-list{height:745px} /* 一覧モードはスタートボタンが無いぶん下端(バージョン表記上)まで拡張 */
 .home-wrap.dragging .slide-list{transition:none}
 .slide-list::-webkit-scrollbar{display:none}
 .wl-head{position:sticky;top:0;z-index:1;display:flex;align-items:baseline;gap:6px;padding:8px 12px;background:rgba(0,0,0,.8);color:#fff;font-size:12px;font-weight:800;white-space:nowrap} /* 他の表と同じヘッダーデザイン */
@@ -574,7 +575,7 @@ button{font-family:inherit}
       <div id="hv-pwrdown"></div>
       </div>
       <div class="room-scroll" id="hv-rooms"></div>
-      <div class="today-band" id="today-band"><div class="tb-track" id="tb-track"></div></div>
+      <div class="today-band" id="today-band" style="display:none"><div class="tb-track" id="tb-track"></div></div><!-- 中身が入るまで非表示（空の白帯チラ見え防止） -->
       <button class="home-side-btn hsb-left" onclick="renderRoomCurve()" aria-label="忘却曲線"><img src="images-thumb/0912.webp" alt="忘却曲線"></button>
       <button class="start-button" onclick="startTest()">スタート</button>
       <button class="home-side-btn hsb-right" onclick="enterListMode()" aria-label="単語帳"><img src="images-thumb/1290.webp" alt="単語帳"></button>
@@ -941,29 +942,20 @@ function claimPresentItem(btn){
 }
 /* PWR=学習済み（1回以上出題）全単語の平均記憶率。時間で低下し復習で上昇 */
 function pwrOverallExact(){const s=loadStats(),ids=Object.keys(s);if(!ids.length)return 0;const now=Date.now();let t=0;ids.forEach(id=>t+=displayMemoryScore(getStat(id,s),now));return t/ids.length;}
-function pwrOverallAt(ms){const s=loadStats(),ids=Object.keys(s);if(!ids.length)return 0;let t=0;ids.forEach(id=>t+=displayMemoryScore(getStat(id,s),ms));return t/ids.length;}
-/* PWR表示は「1回だけ実測→固定速度で直線減算」の決め打ち方式（毎0.3秒の全単語再計算をやめ計算コスト削減） */
-let _pwrT0=0,_pwrBase=0,_pwrRate=0,_pwrFillLast=-1;
-function calibratePwr(){
-  _pwrBase=pwrOverallExact();
-  _pwrRate=Math.max(0,(_pwrBase-pwrOverallAt(Date.now()+3600000))/3600); // %/秒（1時間先との差から一定速度を決める）
-  _pwrT0=Date.now();
-}
+/* PWR表示は「ホーム表示時に1回実測→以後は10秒ごとに0.01%ずつ必ず減る」決め打ち方式（毎0.3秒の全単語再計算なし） */
+let _pwrT0=0,_pwrBase=0,_pwrFillLast=-1;
+function calibratePwr(){_pwrBase=pwrOverallExact();_pwrT0=Date.now();}
 function updatePwrFine(){
   const num=document.getElementById("hv-pwrval");if(!num)return;
   if(!_pwrT0)calibratePwr();
-  const v=Math.max(0,_pwrBase-_pwrRate*(Date.now()-_pwrT0)/1000);
-  num.textContent=v.toFixed(3)+"%";                 // 元のメーターを12.123のように3桁小数で（みるみる減るのが見える）
+  const el=(Date.now()-_pwrT0)/1000;
+  const v=Math.max(0,_pwrBase-0.01*Math.floor(el/10)); // カウントダウンが0になった瞬間に0.01%必ず減る（段階減算）
+  num.textContent=v.toFixed(3)+"%";
   // ゲージ幅は目に見える差（0.05%以上）のときだけ更新。毎0.3秒のwidth書き換えはtransitionが常時走り、帯アニメ等をカクつかせるため
   const f=document.getElementById("hv-pwrfill");
   if(f&&Math.abs(v-_pwrFillLast)>=0.05){f.style.width=v+"%";_pwrFillLast=v;}
   const dn=document.getElementById("hv-pwrdown");
-  if(dn){
-    if(_pwrRate>0){
-      const cycle=0.001/_pwrRate, into=((Date.now()-_pwrT0)/1000)%cycle;
-      dn.textContent=`PWRが0.001%減るまで あと${Math.max(1,Math.ceil(cycle-into))}秒`; // 整数秒で毎秒カウントダウン
-    }else dn.textContent="PWRは安定しています";
-  }
+  if(dn)dn.textContent=v>0?`PWRが0.01%減るまで あと${Math.ceil(10-el%10)}秒`:"";
 }
 setInterval(()=>{const h=document.getElementById("s-home");if(h&&h.classList.contains("on"))updatePwrFine();},300);
 function pwrOverall(){
@@ -1255,18 +1247,27 @@ function buildTodayBand(){
   const band=document.getElementById("today-band"),track=document.getElementById("tb-track");
   if(!band||!track)return;
   const stats=loadStats(),now=Date.now();
-  const cands=Object.keys(stats).map(id=>{
+  const all=Object.keys(stats).map(id=>{
     const w=WORD_BY_ID[id];if(!w)return null;
     const st=getStat(id,stats);
     return{w,st,state:wordState(st,now),ps:priorityScore(w,st,now)};
-  }).filter(Boolean).filter(x=>x.state==="urgent"||x.state==="review")
-    .sort((a,b)=>b.ps-a.ps).slice(0,12);
-  if(!cands.length){band.style.display="none";_tbKey="";return;}
+  }).filter(Boolean);
+  // PWR回復効率が高いurgent/reviewを最優先。12語に満たなければ他の学習済み語を優先度順に補充
+  const pri=all.filter(x=>x.state==="urgent"||x.state==="review").sort((a,b)=>b.ps-a.ps);
+  let picks=pri.slice(0,12);
+  if(picks.length<12){
+    const ids=new Set(picks.map(x=>x.w.id));
+    picks=picks.concat(all.filter(x=>!ids.has(x.w.id)).sort((a,b)=>b.ps-a.ps).slice(0,12-picks.length));
+  }
+  if(!picks.length){band.style.display="none";_tbKey="";return;}
   band.style.display="flex";
-  const key=cands.map(x=>x.w.id).join(",");
+  const key=picks.map(x=>x.w.id).join(",");
   if(key===_tbKey&&track.childElementCount)return; // 内容が同じなら作り直さない（アニメーションを途切れさせない）
   _tbKey=key;
-  const cards=cands.map(x=>`<div class="tb-card"><div class="tb-ko">${esc(x.w.ko)}</div><div class="tb-ja">${esc(x.w.ja)}</div></div>`).join("");
+  // 語数が少ないとグループ幅<帯幅でループが破綻するため、8枚になるまで循環リピートして密度を確保
+  const list=picks.slice();
+  for(let i=0;list.length<8;i++)list.push(picks[i%picks.length]);
+  const cards=list.map(x=>`<div class="tb-card"><div class="tb-ko">${esc(x.w.ko)}</div><div class="tb-ja">${esc(x.w.ja)}</div></div>`).join("");
   track.innerHTML=`<div class="tb-group">${cards}</div><div class="tb-group">${cards}</div>`; // 同一グループ2連結
 }
 let _tbKey="";
@@ -2663,7 +2664,7 @@ function renderRoomCurve(){_curveIdx=curSection;renderCurveCarousel();}
 /* ============================================================ utils ============================================================ */
 function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
 /* バージョン表示（トップページ） */
-const APP_VERSION="v2.53 (2026-07-19)";
+const APP_VERSION="v2.53.1 (2026-07-19)";
 (function(){const el=document.getElementById("appver");if(el)el.textContent=APP_VERSION;})();
 getUserId();
 /* ============================================================ 収益化（投げ銭＋AdSense）。IDを入れるまで何も表示・読込しない ============================================================ */
