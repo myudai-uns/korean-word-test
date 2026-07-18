@@ -79,8 +79,12 @@ button{font-family:inherit}
 
 /* choices */
 .choices{display:flex;flex-direction:column;gap:12px;margin-bottom:14px}
-.choice{background:rgba(0,0,0,.8);border:none;border-radius:0;padding:18px;font-size:21px;font-weight:700;color:#fff;
+.choice{position:relative;background:rgba(0,0,0,.8);border:none;border-radius:0;padding:18px;font-size:21px;font-weight:700;color:#fff;
   text-align:center;cursor:pointer;transition:background .12s,transform .08s;min-height:60px}
+.chspk{position:absolute;right:6px;top:50%;transform:translateY(-50%);opacity:.8;pointer-events:none;display:flex}
+.cdown{display:flex;align-items:center;justify-content:center;height:60vh}
+.cnum{font-size:170px;font-weight:900;color:#fff;line-height:1;animation:cpop .4s ease}
+@keyframes cpop{from{transform:scale(1.8);opacity:.15}to{transform:scale(1);opacity:1}}
 .choice:active{transform:scale(.98);background:rgba(0,0,0,.65)}
 /* 回答後のハイライト：正解=赤 / 選んだ誤答=青 / その他=暗い灰色のまま。色は20%薄く(不透明度.8)、視認性は維持 */
 .choice.correct{background:rgba(255,59,59,.8);color:#fff}
@@ -153,11 +157,14 @@ button{font-family:inherit}
 .home-wrap .gauge,.dash-head .gauge{position:absolute;background:#333333;border-radius:999px;padding:3px;box-sizing:border-box;z-index:2}
 .home-wrap .gfill,.dash-head .gfill{height:100%;border-radius:999px;transition:width .5s ease;width:0}
 /* ヘッダー（さらに上へ。茶色領域は黒80%透過。4色ドットは廃止） */
-.avatar-circle{position:absolute;left:40px;top:44px;width:114px;height:114px;border-radius:50%;background:#9FA6AD;border:5px solid rgba(0,0,0,.8);box-sizing:border-box;overflow:hidden;cursor:pointer;z-index:2} /* 背景=タイプ/PWRページと同じグレー */
+.avatar-circle{position:absolute;left:40px;top:44px;width:114px;height:114px;border-radius:50%;background:#fff;border:5px solid rgba(0,0,0,.8);box-sizing:border-box;overflow:hidden;cursor:pointer;z-index:2} /* 背景=タイプ/PWRページと同じグレー */
 .avatar-image{width:100%;height:100%;object-fit:contain;padding:12px;box-sizing:border-box}
 .hv-level{position:absolute;left:176px;top:44px;display:flex;align-items:baseline;gap:3px;line-height:1;z-index:2;font-size:20px}
 .hv-level span{font-size:38px}
-.hv-code{position:absolute;right:47px;top:42px;font-size:40px;letter-spacing:1px;line-height:1;cursor:pointer;z-index:2}
+.hv-code{position:absolute;right:47px;top:42px;font-size:40px;letter-spacing:1px;line-height:1;cursor:pointer;z-index:2;display:flex;align-items:center;gap:5px}
+.streak-fire{width:50px;height:50px;object-fit:contain;display:block}
+#hv-pwrdown{position:absolute;left:166px;top:153px;width:403px;text-align:center;font-size:16px;font-weight:700;color:#fff;z-index:2;pointer-events:none;text-shadow:0 1px 3px rgba(0,0,0,.5)}
+.home-side-btn img{width:74%;height:74%;object-fit:contain;pointer-events:none;display:block;margin:auto}
 .status-panel{position:absolute;left:166px;top:83px;width:403px;height:64px;border-radius:32px;background:rgba(0,0,0,.8);z-index:1;cursor:pointer}
 .hv-lab,.hv-xpg,.hv-pwrg{pointer-events:none}
 .hv-lab{position:absolute;font-size:18px;line-height:19px;z-index:2}
@@ -534,7 +541,7 @@ button{font-family:inherit}
       <div class="home-head">
       <div class="avatar-circle" onclick="enterStatusMode()"><img class="avatar-image" id="hv-char" src="characters/analyzing.svg" alt=""></div>
       <div class="hv-level" id="hv-level" onclick="enterStatusMode()" style="cursor:pointer">Lv.<span>1</span></div>
-      <div class="hv-code" id="hv-code" onclick="enterStatusMode()">----</div>
+      <div class="hv-code" id="hv-code" onclick="enterStatusMode()"></div>
       <div class="reward-rail">
         <button class="rr-btn rr-set" id="set-btn" onclick="openSettings()">⚙</button>
         <button class="rr-btn" id="cal-btn" onclick="openCalendar()"><img src="icons/calendar.webp" alt="カレンダー"></button>
@@ -550,11 +557,12 @@ button{font-family:inherit}
       <div class="hv-lab hv-pwrlabel">PWR</div>
       <div class="gauge hv-pwrg"><div class="gfill" id="hv-pwrfill" style="background:#00FF37"></div></div>
       <div class="hv-lab hv-pwrval" id="hv-pwrval">0%</div>
+      <div id="hv-pwrdown"></div>
       </div>
       <div class="room-scroll" id="hv-rooms"></div>
-      <button class="home-side-btn hsb-left" onclick="renderRoomCurve()">忘却<br>曲線</button>
+      <button class="home-side-btn hsb-left" onclick="renderRoomCurve()" aria-label="忘却曲線"><img src="images-thumb/0912.webp" alt="忘却曲線"></button>
       <button class="start-button" onclick="startTest()">スタート</button>
-      <button class="home-side-btn hsb-right" onclick="enterListMode()">単語帳</button>
+      <button class="home-side-btn hsb-right" onclick="enterListMode()" aria-label="単語帳"><img src="images-thumb/1290.webp" alt="単語帳"></button>
       <div id="status-ov"></div>
       <div class="hv-ver" id="appver"></div>
     </div>
@@ -785,6 +793,8 @@ function specialBonusFor(dt){
 }
 function launchedDays(){try{return JSON.parse(localStorage.getItem(LS_LAUNCH)||"[]")||[];}catch(e){return[];}}
 function markLaunch(){const a=launchedDays(),tk=dayKey(Date.now());if(!a.includes(tk)){a.push(tk);localStorage.setItem(LS_LAUNCH,JSON.stringify(a));}}
+/* 連続ログイン日数：今日を起点に起動記録(kwt_launch_v1)が連続している日数 */
+function loginStreak(){const s=new Set(launchedDays());let n=0;const d=new Date();for(;;){if(!s.has(dayKey(d.getTime())))break;n++;d.setDate(d.getDate()-1);}return n||1;}
 function openCalendar(){
   const m=document.getElementById("calendar-modal");
   const now=new Date(),y=now.getFullYear(),mo=now.getMonth();
@@ -916,12 +926,19 @@ function claimPresentItem(btn){
 }
 /* PWR=学習済み（1回以上出題）全単語の平均記憶率。時間で低下し復習で上昇 */
 function pwrOverallExact(){const s=loadStats(),ids=Object.keys(s);if(!ids.length)return 0;const now=Date.now();let t=0;ids.forEach(id=>t+=displayMemoryScore(getStat(id,s),now));return t/ids.length;}
+function pwrOverallAt(ms){const s=loadStats(),ids=Object.keys(s);if(!ids.length)return 0;let t=0;ids.forEach(id=>t+=displayMemoryScore(getStat(id,s),ms));return t/ids.length;}
 function updatePwrFine(){
   const num=document.getElementById("hv-pwrval");if(!num)return;
   const v=pwrOverallExact();
   num.textContent=v.toFixed(3)+"%";                 // 元のメーターを12.123のように3桁小数で（みるみる減るのが見える）
   const f=document.getElementById("hv-pwrfill");if(f)f.style.width=v+"%";
+  const dn=document.getElementById("hv-pwrdown");
+  if(dn){
+    const perSec=(v-pwrOverallAt(Date.now()+3600000))/3600; // 1時間後との差から毎秒の減少率を算出
+    dn.textContent=perSec>0?`PWRが0.001%減るまで あと${fmtSecJP(0.001/perSec)}`:"PWRは安定しています";
+  }
 }
+function fmtSecJP(s){if(!isFinite(s)||s<0)return"—";return(s<100?s.toFixed(1):String(Math.round(s)))+"秒";}
 setInterval(()=>{const h=document.getElementById("s-home");if(h&&h.classList.contains("on"))updatePwrFine();},300);
 function pwrOverall(){
   const s=loadStats(),ids=Object.keys(s);
@@ -1170,10 +1187,9 @@ if(window.visualViewport)window.visualViewport.addEventListener("resize",scaleHo
 function renderHome(){
   const d=computeDiagnosis();
   // 1軸でも判定できたら即コード表示（テストごとに更新される）
+  // 連続ログイン日数（炎アイコン=生成画像0773 불 + 日数）。タイプコード表示は廃止
   const codeEl=document.getElementById("hv-code");
-  if(d.axes.some(a=>a.code)){ // UI.pdf準拠: コード前に軸カラーの4ドット
-    codeEl.innerHTML=d.code.split("").map(ch=>`<span class="cdot" style="background:${AXIS_COLORS[ch]||"rgba(255,255,255,.4)"}"></span>`).join("")+`<span class="ctext">${d.code}</span>`;
-  }else codeEl.textContent="----";
+  codeEl.innerHTML=`<img class="streak-fire" src="images-thumb/0773.webp" alt="連続ログイン">`+`<span class="ctext">${loginStreak()}</span>`;
   document.getElementById("hv-char").src=charPathFor(d);
   const xp=xpInfo();
   document.getElementById("hv-level").innerHTML=`Lv.<span>${xp.level}</span>`;
@@ -1930,8 +1946,26 @@ function startTest(reviewIds){
   state={questions:qs,idx:0,results:[],testId:"t-"+Date.now().toString(36),userId:getUserId(),
     cycleNumber:prog.cycleNumber||1,isReview:!!(reviewIds&&reviewIds.length),conditionBefore,reviewBefore,pwrBefore:pwrOverall(),roomPwrBefore:roomInfoFor(curSection).pwr,levelBefore:xpInfo().level};
   sfxStart();
-  renderQuestion();
   show("s-quiz");
+  showCountdown(()=>renderQuestion());
+}
+
+/* スタート後の3・2・1カウントダウン。timer変数を共用するためquitTestで確実に止まる */
+function showCountdown(cb){
+  const stage=document.getElementById("qstage");
+  document.getElementById("prog").textContent="";
+  document.getElementById("time").textContent="";
+  const fill=document.getElementById("tfill");if(fill){fill.className="tfill";fill.style.width="100%";}
+  let n=3;
+  const draw=()=>{stage.innerHTML=`<div class="cdown"><span class="cnum">${n}</span></div>`;};
+  draw();
+  clearInterval(timer);
+  timer=setInterval(()=>{
+    if(!document.getElementById("s-quiz").classList.contains("on")){clearInterval(timer);return;}
+    n--;
+    if(n<=0){clearInterval(timer);cb();return;}
+    draw();
+  },800);
 }
 
 function curLimit(){return state.questions[state.idx].type==="w"?20:10;}
@@ -2097,11 +2131,31 @@ function showOverlay(status,q,userAnswer){
   document.body.appendChild(ov);
   if(tap){
     ov.style.cursor="pointer";
-    const go=()=>{if(ov._done)return;ov._done=true;ov.remove();afterAnswer();};
+    if(q.type!=="w")addChoiceSpeakers(); // 各選択肢の右端に音声マーク
+    const go=(e)=>{
+      if(ov._done)return;
+      if(q.type!=="w"&&e){ // オーバーレイ越しに選択肢を叩いたらその単語の韓国語音声（次へは進まない）
+        const hit=document.elementsFromPoint(e.clientX,e.clientY).find(el=>el.classList&&el.classList.contains("choice"));
+        if(hit){speakChoiceKo(q,hit.dataset.v);return;}
+      }
+      ov._done=true;ov.remove();afterAnswer();
+    };
     ov.addEventListener("click",go);
   }else{
     ovTimer=setTimeout(()=>{ov.remove();afterAnswer();},isCorrect?1000:2000);
   }
+}
+/* 回答後（タップで次へ設定時）用：選択肢右端の音声マークと、選択肢の韓国語読み上げ */
+const SPK_SVG='<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M3 9v6h4l5 5V4L7 9H3z" fill="#fff"/><path d="M16 8.6a4.2 4.2 0 010 6.8M18.6 6.2a7.6 7.6 0 010 11.6" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"/></svg>';
+function addChoiceSpeakers(){document.querySelectorAll("#qstage .choice").forEach(b=>{if(!b.querySelector(".chspk"))b.insertAdjacentHTML("beforeend",`<span class="chspk">${SPK_SVG}</span>`);});}
+function speakChoiceKo(q,v){
+  try{
+    let ko=null;
+    if(q.type==="jk")ko=v; // 選択肢自体が韓国語
+    else if(v===q.correct)ko=q.word.ko;
+    else{const m=q.cmeta&&q.cmeta[v];if(m&&m.wordId!=null&&WORD_BY_ID[m.wordId])ko=WORD_BY_ID[m.wordId].ko;} // Section01の手作り誤答(wordId=null)は対応する韓国語が無いため再生しない
+    if(ko){stopSpeak();_speakTTS(ko);}
+  }catch(e){}
 }
 /* 四択：正解の選択肢を赤、ユーザーが選んだ誤答を青で強調。その他は暗い灰色のまま */
 function highlightChoices(q,status,userAnswer){
@@ -2536,7 +2590,7 @@ function renderRoomCurve(){_curveIdx=curSection;renderCurveCarousel();}
 /* ============================================================ utils ============================================================ */
 function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
 /* バージョン表示（トップページ） */
-const APP_VERSION="v2.48.1 (2026-06-18)";
+const APP_VERSION="v2.51 (2026-07-19)";
 (function(){const el=document.getElementById("appver");if(el)el.textContent=APP_VERSION;})();
 getUserId();
 /* ============================================================ 収益化（投げ銭＋AdSense）。IDを入れるまで何も表示・読込しない ============================================================ */
