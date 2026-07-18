@@ -390,7 +390,10 @@ button{font-family:inherit}
 .ax2tick.end{height:18px}
 .ax2knob{position:absolute;top:50%;width:21px;height:21px;border-radius:50%;border:3px solid #fff;transform:translate(-50%,-50%);box-sizing:border-box}
 .ax2panel{background:rgba(255,255,255,.15);padding:14px 18px} /* 4メータの白15%背景 */
-.tdetail-sec .ax2row{margin:12px 0}
+.tdetail-sec .ax2row{margin:12px 0 4px}
+.ax2desc{font-size:11.5px;line-height:1.6;color:rgba(255,255,255,.82);padding:0 2px 12px;border-bottom:1px solid rgba(255,255,255,.18);margin-bottom:12px} /* 各メータ直下の常時説明 */
+.ax2panel .ax2desc:last-child{border-bottom:none;margin-bottom:0;padding-bottom:2px}
+.ax2desc b{color:#fff;font-size:12px}
 .t16link{margin-top:auto;text-align:right;font-size:17px;font-weight:800;cursor:pointer;letter-spacing:1px}
 .t16link b{font-size:19px}
 /* ステータス内のROOM表記・PWRメーターはPWR詳細ページと同じ見た目サイズ（--invで逆スケール補正） */
@@ -1492,13 +1495,7 @@ function refreshHomeStats(){
 }
 
 /* --- タイプ詳細画面（コード＋キャラクター＋4軸＋タイプの特徴＋16タイプ一覧） --- */
-let _typePeek=null,_axisPeek=null;
-function toggleAxisPeek(i){
-  _axisPeek=_axisPeek===i?null:i;
-  const pb=document.querySelector("#s-type .page-body"),st=pb?pb.scrollTop:0;
-  renderTypeDetail();
-  const pb2=document.querySelector("#s-type .page-body");if(pb2)pb2.scrollTop=st;
-}
+let _typePeek=null;
 function togglePeek(code){
   _typePeek=code; // タップで切替（常にどれか1つを表示）
   const pb=document.querySelector("#s-type .page-body"),st=pb?pb.scrollTop:0; // スクロール位置を保持
@@ -1515,16 +1512,15 @@ function renderTypeDetail(){
     const a=d.axes[i],t=Math.round(a.score==null?50:a.score); // t=左寄り度(0-100)
     const domLeft=t>=50,col=AXIS_COLORS[domLeft?ax.L:ax.R];
     const pos=100-t; // 左寄りほど点が左へ（ステータス画面と同じUI）
-    return `<div class="ax2row" onclick="toggleAxisPeek(${i})">
+    return `<div class="ax2row">
       <span class="ax2dot" style="background:${AXIS_COLORS[ax.L]}"></span>
       <span class="ax2l">${ax.L}</span>
       <div class="ax2bar"><div class="ax2line"></div>${ticks}<div class="ax2knob" style="left:${pos}%;background:${col}"></div></div>
       <span class="ax2l">${ax.R}</span>
       <span class="ax2dot" style="background:${AXIS_COLORS[ax.R]}"></span>
-    </div>`;
-  }).join("");
-  // パラメータの説明は4軸ブロックの下部に統一表示
-  const axPeek=_axisPeek!=null?`<div class="tpeek axpeek">${esc(AXES[_axisPeek].desc)}</div>`:"";
+    </div>
+    <div class="ax2desc"><b>${ax.L}＝${esc(ax.ln)}　／　${ax.R}＝${esc(ax.rn)}</b><br>${esc(ax.desc)}</div>`;
+  }).join(""); // 各メータの説明はタップ切替をやめ常時表示
   // タイプ説明（選択中＝既定は自分）
   const pk=_typePeek;
   const peek=`<div class="tpeek" id="tpeek-main"><img src="characters/${pk.toLowerCase()}.svg" alt="">
@@ -1542,7 +1538,7 @@ function renderTypeDetail(){
         <div class="t-job">${any?esc((TYPE_INFO[fullCode]||[""])[0]):""}</div>
         <img class="t-char" src="${charPathFor(d)}" alt="">
       </div>
-      <div class="tdetail-sec" style="margin-top:24px"><div class="ax2panel">${bars}</div>${axPeek}</div>
+      <div class="tdetail-sec" style="margin-top:24px"><div class="ax2panel">${bars}</div></div>
       <div class="tdetail-sec">${peek}<div class="tlist">${list}</div></div>
     </div>
    </div>`;
@@ -2673,7 +2669,7 @@ function renderRoomCurve(){_curveIdx=curSection;renderCurveCarousel();}
 /* ============================================================ utils ============================================================ */
 function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
 /* バージョン表示（トップページ） */
-const APP_VERSION="v2.55.2 (2026-07-19)";
+const APP_VERSION="v2.56 (2026-07-19)";
 (function(){const el=document.getElementById("appver");if(el)el.textContent=APP_VERSION;})();
 getUserId();
 /* ============================================================ 収益化（投げ銭＋AdSense）。IDを入れるまで何も表示・読込しない ============================================================ */
